@@ -1,0 +1,6 @@
+{
+  "name": "Culinary Catering Assistant - Pro",
+  "description": "An advanced application for managing catering operations, including ingredients, dishes, cooking items, and customer orders. Features user roles (Suprem, Admin, User), signup with approval, and personalized catering names for PDF generation.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}
