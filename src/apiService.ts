@@ -16,7 +16,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   };
 
   // Add NocoDB API Token if available
-  if (NOCODB_API_TOKEN && NOCODB_API_TOKEN !== 'YOUR_NOCODB_API_TOKEN_HERE') {
+  if (NOCODB_API_TOKEN && NOCODB_API_TOKEN !== 'ChKvc325bE9gCybhvfd3cmPQ3kcJlEw-Yf3QQFjW') {
     defaultHeaders['xc-token'] = NOCODB_API_TOKEN;
   }
   

@@ -24,12 +24,9 @@ export const getUserAPI = async (id: string): Promise<AuthUser | undefined> => {
 };
 
 export const getUserByUsernameAPI = async (username: string): Promise<AuthUser | undefined> => {
-    // NocoDB filtering uses query parameters. Example: where=(username,eq,target_username)
-    // The exact query parameter might differ based on NocoDB version and setup.
-    // Consult NocoDB API documentation for precise filtering syntax.
-    // This is a common way:
+    // NocoDB filtering uses query parameters. Example: where=(username,eq,'target_username')
     const params = {
-        where: `(username,eq,${username})`
+        where: `(username,eq,'${username}')` // Enclose username in single quotes
     };
     const users = await getList<AuthUser>(USERS_TABLE_PATH, params);
     return users.length > 0 ? users[0] : undefined;
@@ -93,7 +90,7 @@ export const getCustomerAPI = async (id: string): Promise<Customer | undefined> 
 };
 export const getAllCustomersAPI = async (): Promise<Customer[]> => getList<Customer>(CUSTOMERS_TABLE_PATH);
 export const getCustomersByUserIdAPI = async (userId: string): Promise<Customer[]> => {
-    const params = { where: `(userId,eq,${userId})` }; // NocoDB filter
+    const params = { where: `(userId,eq,'${userId}')` }; // NocoDB filter, ensure userId is string
     return getList<Customer>(CUSTOMERS_TABLE_PATH, params);
 };
 export const updateCustomerAPI = async (id: string, customer: Partial<Customer>): Promise<Customer> => update<Customer>(CUSTOMERS_TABLE_PATH, id, customer);
@@ -112,7 +109,7 @@ export interface CustomerSelectedDishRecord {
   // NocoDB typically adds `nc_created_at`, `nc_updated_at`, `nc_order_id` etc.
 }
 export const getCustomerSelectedDishesAPI = async (customerId: string): Promise<CustomerSelectedDishRecord[]> => {
-    const params = { where: `(customer_id,eq,${customerId})` }; // NocoDB filter
+    const params = { where: `(customer_id,eq,'${customerId}')` }; // NocoDB filter
     return getList<CustomerSelectedDishRecord>(CUSTOMER_SELECTED_DISHES_TABLE_PATH, params);
 };
 export const addCustomerSelectedDishAPI = async (selection: { customer_id: string; dish_id: string }): Promise<CustomerSelectedDishRecord> => {
@@ -131,7 +128,7 @@ export interface CustomerSelectedCookingItemRecord {
   quantity: number;
 }
 export const getCustomerSelectedCookingItemsAPI = async (customerId: string): Promise<CustomerSelectedCookingItemRecord[]> => {
-    const params = { where: `(customer_id,eq,${customerId})` }; // NocoDB filter
+    const params = { where: `(customer_id,eq,'${customerId}')` }; // NocoDB filter
     return getList<CustomerSelectedCookingItemRecord>(CUSTOMER_SELECTED_COOKING_ITEMS_TABLE_PATH, params);
 };
 export const addCustomerSelectedCookingItemAPI = async (selection: { customer_id: string; cooking_item_id: string; quantity: number }): Promise<CustomerSelectedCookingItemRecord> => {

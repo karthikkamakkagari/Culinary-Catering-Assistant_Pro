@@ -1,4 +1,3 @@
-
 // App.tsx
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Page, Ingredient, Dish, CookingItem, Customer, ModalType, IngredientUnits, CookingItemUnits, DishIngredient, CustomerDishSelection, CustomerCookingItemSelection, GeneratedOrder, CumulativeIngredient, AuthUser, UserRole, Language, LocalizedText, LanguageLabels, UITranslationKeys, SelectedCookingItemDetail } from './types';
@@ -35,23 +34,21 @@ import {
 const AUTH_USER_STORAGE_KEY = 'culinaryCateringAppUser';
 
 const App: React.FC = () => {
-  if (!NOCODB_API_TOKEN || NOCODB_API_TOKEN === 'YOUR_NOCODB_API_TOKEN_HERE') {
+  if (!NOCODB_API_TOKEN || NOCODB_API_TOKEN === 'YOUR_NOCODB_API_TOKEN_HERE') { // This check remains valid
     return (
         <div className="flex flex-col justify-center items-center h-screen bg-red-50 p-4">
             <InformationCircleIcon className="w-16 h-16 text-red-500 mb-4" />
-            <h1 className="text-2xl font-bold text-red-700 mb-2">Critical Configuration Missing!</h1>
+            <h1 className="text-2xl font-bold text-red-700 mb-2">Critical Configuration Missing: API Token!</h1>
             <p className="text-red-600 text-center mb-4">
                 The NocoDB API Token is not configured. This application cannot connect to the backend without it.
             </p>
             <p className="text-sm text-slate-700 text-center">
                 Please open the file <code className="bg-red-200 text-red-800 px-1 rounded">src/apiConstants.ts</code> and set the <code className="bg-red-200 text-red-800 px-1 rounded">NOCODB_API_TOKEN</code> constant with your actual API token from NocoDB.
             </p>
-             <p className="text-sm text-slate-700 text-center mt-2">
-                Also, ensure all <code className="bg-red-200 text-red-800 px-1 rounded">*_TABLE_PATH</code> constants in the same file are correct for your NocoDB project.
-            </p>
         </div>
     );
   }
+
 
   const [currentPage, setCurrentPage] = useState<Page>(Page.PublicHome);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -112,7 +109,11 @@ const App: React.FC = () => {
             setCustomers(fetchedCustomers);
 
         } catch (error: any) {
-            handleApiError("Failed to load initial application data.", error);
+             let customErrorMessage = "Failed to load initial application data.";
+            if (error.status === 404 && error.message && error.message.toLowerCase().includes('table') && error.message.toLowerCase().includes('not found')) {
+                customErrorMessage = `A crucial table was not found (404). Please verify the specific TABLE_PATH ID for the missing table (e.g., for '${error.message.split("'")[1]}') in src/apiConstants.ts. Ensure API_BASE_URL and NOCODB_API_TOKEN are also correct. Error: "${error.message}". URL: ${error.url}`;
+            }
+            handleApiError(customErrorMessage, error);
         } finally {
             setIsLoadingUsers(false);
             setIsLoadingIngredients(false);
@@ -133,9 +134,6 @@ const App: React.FC = () => {
             if (storedUserString) {
                 try {
                     const storedUser: AuthUser = JSON.parse(storedUserString);
-                    // For NocoDB, direct password check might be done client-side after fetching user,
-                    // or your backend provides a session validation endpoint.
-                    // Here, we assume fetching by ID and checking 'isApproved' is part of session validation.
                     const userFromAPI = await getUserAPI(storedUser.id);
                     if (userFromAPI && userFromAPI.isApproved) {
                         setCurrentUser(userFromAPI);
@@ -198,40 +196,51 @@ const App: React.FC = () => {
 
   const handleLogin = async (loginAttemptUser: {username: string, password?: string}) => {
     setApiError(null);
+    console.log(`Attempting to log in with username: ${loginAttemptUser.username}`);
     try {
-        // With NocoDB, you might fetch the user by username and then compare the password client-side (less secure)
-        // or have a custom backend endpoint for authentication.
-        // This example assumes client-side comparison after fetching user data.
         const userFromApi = await getUserByUsernameAPI(loginAttemptUser.username); 
-        if (userFromApi && userFromApi.password === loginAttemptUser.password) { // Password check
-            if (userFromApi.isApproved) {
-                setCurrentUser(userFromApi);
-                localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(userFromApi)); 
-                setCurrentPage(Page.Home);
+        console.log("Fetched user for login attempt from API:", userFromApi);
+        
+        if (userFromApi) {
+            console.log("Password from API:", userFromApi.password);
+            console.log("Password entered:", loginAttemptUser.password);
+            const passwordsMatch = userFromApi.password === loginAttemptUser.password;
+            console.log("Passwords match:", passwordsMatch);
+            console.log("Is approved status from API:", userFromApi.isApproved);
+
+            if (passwordsMatch) {
+                if (userFromApi.isApproved) {
+                    setCurrentUser(userFromApi);
+                    localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(userFromApi)); 
+                    setCurrentPage(Page.Home);
+                } else {
+                    handleApiError('Your account is pending approval.');
+                }
             } else {
-                handleApiError('Your account is pending approval.');
+                handleApiError('Invalid username or password.');
             }
         } else {
-            handleApiError('Invalid username or password.');
+            handleApiError('Invalid username or password (user not found by username).');
         }
     } catch(error) {
-        handleApiError('Login failed.', error);
+        handleApiError('Login failed during API call.', error);
     }
   };
 
   const handleSignup = async (newUserData: Omit<AuthUser, 'id' | 'isApproved' | 'role' | 'credits'> & {email: string, preferredLanguage: Language, imageUrl?: string | null}) => {
     setApiError(null);
-    const apiUserData: Omit<AuthUser, 'id'> = {
+    const apiUserData: AuthUser = { 
+      id: generateUniqueId(), 
       ...newUserData,
-      isApproved: false, // Default for new signups
-      role: UserRole.USER, // Default role
-      credits: 0, // Default credits
+      isApproved: false, 
+      role: UserRole.USER, 
+      credits: 0, 
       imageUrl: newUserData.imageUrl || placeholderImage(DEFAULT_IMAGE_SIZE,DEFAULT_IMAGE_SIZE, newUserData.username),
       preferredLanguage: newUserData.preferredLanguage || Language.EN,
     };
     try {
-        const newUser = await addUserAPI(apiUserData); 
-        setUsers(await getAllUsersAPI()); // Refresh user list
+        const newUser = await addUserAPI(apiUserData as Omit<AuthUser, 'id'>); 
+        setUsers(await getAllUsersAPI()); 
         alert(getUIText(UITranslationKeys.ALERT_SIGNUP_SUCCESS_PENDING_APPROVAL, newUser.preferredLanguage));
         setCurrentPage(Page.Login);
     } catch (error) {
@@ -253,7 +262,7 @@ const App: React.FC = () => {
     setApiError(null);
     try {
         const updatedUser = await updateUserAPI(userId, { isApproved: true, role: roleToAssign });
-        setUsers(await getAllUsersAPI()); // Refresh users
+        setUsers(await getAllUsersAPI()); 
         alert(getUIText(UITranslationKeys.ALERT_USER_APPROVED_EMAIL_SIMULATION, currentUser.preferredLanguage, Language.EN, {
             userName: updatedUser.username,
             roleAssigned: roleToAssign,
@@ -276,12 +285,10 @@ const App: React.FC = () => {
         const allCurrentUsers = await getAllUsersAPI();
         setUsers(allCurrentUsers);
 
-        // If the updated user is the current user, update their state too
         if (currentUser?.id === userId) {
             setCurrentUser(updatedUser);
             localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(updatedUser));
         }
-        // If viewing this user, update their details in the view
         if (selectedUserForView && selectedUserForView.id === userId) {
             setSelectedUserForView(updatedUser);
         }
@@ -299,7 +306,7 @@ const App: React.FC = () => {
     setApiError(null);
     try {
         const updatedUser = await updateUserAPI(userId, { preferredLanguage: language });
-        setUsers(await getAllUsersAPI()); // Refresh users
+        setUsers(await getAllUsersAPI()); 
         if (currentUser?.id === userId) {
             setCurrentUser(updatedUser);
             localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(updatedUser));
@@ -321,13 +328,11 @@ const App: React.FC = () => {
     setApiError(null);
     try {
         const updatedUser = await updateUserAPI(userId, updatedDetails);
-        setUsers(await getAllUsersAPI()); // Refresh user list
+        setUsers(await getAllUsersAPI()); 
 
-        // Update selectedUserForView if it's the user being edited
         if (selectedUserForView?.id === userId) {
             setSelectedUserForView(updatedUser);
         }
-        // Update currentUser if it's the user being edited (Suprem editing their own details via this path)
         if (currentUser?.id === userId) { 
             setCurrentUser(updatedUser);
             localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(updatedUser));
@@ -366,28 +371,23 @@ const App: React.FC = () => {
 
   const canPerformAction = (action: 'add' | 'edit' | 'delete', entity: 'ingredient' | 'dish' | 'cookingItem' | 'customer' | 'orderIngredient' | 'orderCookingItem', item?: any): boolean => {
     if (!currentUser) return false;
-    // Suprem can do anything
     if (currentUser.role === UserRole.SUPREM) return true;
 
-    // Admin can manage all data entities listed in the 'entity' type.
-    // User account management (approvals, role changes for others) is handled by separate functions with SUPREM checks.
     if (currentUser.role === UserRole.ADMIN) {
         return true; 
     }
     
-    // User can add/edit/delete their own customers.
     if (currentUser.role === UserRole.USER) {
         if (entity === 'customer') {
             if (action === 'add') return currentUser.credits > 0;
-            if (item && item.userId === currentUser.id) return true; // Can edit/delete own customer
+            if (item && item.userId === currentUser.id) return true; 
             return false;
         }
         if (entity === 'orderIngredient' || entity === 'orderCookingItem') {
-             // Users can edit order line items if they own the customer record
             if (item && item.customerUserId === currentUser.id) return true;
             return false;
         }
-        return false; // Users cannot manage ingredients, dishes, cooking items directly
+        return false; 
     }
     return false;
   };
@@ -404,7 +404,7 @@ const App: React.FC = () => {
     newNameLocalized[currentUser.preferredLanguage] = ingredientData.name;
     if (!newNameLocalized[Language.EN] && currentUser.preferredLanguage !== Language.EN) newNameLocalized[Language.EN] = ingredientData.name;
 
-    const apiIngredientData = {
+    const apiIngredientData: Partial<Ingredient> = { 
         name: newNameLocalized,
         imageUrl: ingredientData.imageUrl || placeholderImage(DEFAULT_IMAGE_SIZE, DEFAULT_IMAGE_SIZE, getTranslatedText(newNameLocalized, currentUser.preferredLanguage)),
         quantity: ingredientData.quantity,
@@ -416,7 +416,15 @@ const App: React.FC = () => {
         if (ingredientData.id) { 
             await updateIngredientAPI(ingredientData.id, apiIngredientData);
         } else { 
-            await addIngredientAPI(apiIngredientData);
+             const fullIngredientData: Omit<Ingredient, 'id'> = {
+                ...apiIngredientData,
+                name: apiIngredientData.name!, 
+                imageUrl: apiIngredientData.imageUrl!,
+                quantity: apiIngredientData.quantity!,
+                unit: apiIngredientData.unit!,
+                price: apiIngredientData.price!,
+             };
+            await addIngredientAPI(fullIngredientData);
         }
         setIngredients(await getAllIngredientsAPI());
         closeModal();
@@ -435,7 +443,6 @@ const App: React.FC = () => {
         await deleteIngredientAPI(id);
         setIngredients(await getAllIngredientsAPI());
 
-        // Also update dishes that might contain this ingredient
         const currentDishes = await getAllDishesAPI();
         const updatedDishesPromises: Promise<any>[] = [];
 
@@ -443,16 +450,13 @@ const App: React.FC = () => {
             const originalIngredientsCount = dish.ingredients.length;
             const newDishIngredients = dish.ingredients.filter(di => di.ingredientId !== id);
             if (newDishIngredients.length !== originalIngredientsCount) {
-                // Important: Construct the payload your API expects for update.
-                // If your API updates only specific fields, send only those.
-                // If it expects the full object, ensure all required fields are present.
-                const updatedDishPayload = { ...dish, ingredients: newDishIngredients }; // Example
+                const updatedDishPayload = { ...dish, ingredients: newDishIngredients }; 
                 updatedDishesPromises.push(updateDishAPI(dish.id, updatedDishPayload)); 
             }
         }
         if (updatedDishesPromises.length > 0) {
             await Promise.all(updatedDishesPromises);
-            setDishes(await getAllDishesAPI()); // Refresh dishes
+            setDishes(await getAllDishesAPI()); 
         }
         alert('Ingredient deleted. Affected dishes may have been updated.');
     } catch (error) {
@@ -479,7 +483,7 @@ const App: React.FC = () => {
         newPrepStepsLocalized[Language.EN] = dishData.preparationSteps;
     }
 
-    const apiDishData = {
+    const apiDishData: Partial<Dish> = {
         name: newNameLocalized,
         imageUrl: dishData.imageUrl || placeholderImage(DEFAULT_IMAGE_SIZE, DEFAULT_IMAGE_SIZE, getTranslatedText(newNameLocalized, currentUser.preferredLanguage)),
         ingredients: dishData.ingredients,
@@ -490,7 +494,14 @@ const App: React.FC = () => {
         if (dishData.id) {
             await updateDishAPI(dishData.id, apiDishData);
         } else {
-            await addDishAPI(apiDishData);
+             const fullDishData: Omit<Dish, 'id'> = {
+                ...apiDishData,
+                name: apiDishData.name!,
+                imageUrl: apiDishData.imageUrl!,
+                ingredients: apiDishData.ingredients!,
+                preparationSteps: apiDishData.preparationSteps!,
+             };
+            await addDishAPI(fullDishData);
         }
         setDishes(await getAllDishesAPI());
         closeModal();
@@ -508,9 +519,8 @@ const App: React.FC = () => {
     try {
         await deleteDishAPI(id);
         setDishes(await getAllDishesAPI());
-        // Potentially update customer orders if this dish was part of them
         alert('Dish deleted. Customer orders might need to be refreshed or updated if they contained this dish.');
-        setCustomers(await getAllCustomersAPI()); // Refresh customers to reflect changes in orders
+        setCustomers(await getAllCustomersAPI()); 
     } catch (error) {
         handleApiError(`Failed to delete dish ${id}.`, error);
     }
@@ -532,7 +542,7 @@ const App: React.FC = () => {
     newSummaryLocalized[currentUser.preferredLanguage] = itemData.summary;
     if (!newSummaryLocalized[Language.EN] && currentUser.preferredLanguage !== Language.EN) newSummaryLocalized[Language.EN] = itemData.summary;
 
-    const apiCookingItemData = {
+    const apiCookingItemData: Partial<CookingItem> = {
         name: newNameLocalized,
         imageUrl: itemData.imageUrl || placeholderImage(DEFAULT_IMAGE_SIZE,DEFAULT_IMAGE_SIZE, getTranslatedText(newNameLocalized, currentUser.preferredLanguage)),
         summary: newSummaryLocalized,
@@ -543,7 +553,15 @@ const App: React.FC = () => {
         if (itemData.id) {
             await updateCookingItemAPI(itemData.id, apiCookingItemData);
         } else {
-            await addCookingItemAPI(apiCookingItemData);
+             const fullCookingItemData: Omit<CookingItem, 'id'> = {
+                ...apiCookingItemData,
+                name: apiCookingItemData.name!,
+                imageUrl: apiCookingItemData.imageUrl!,
+                summary: apiCookingItemData.summary!,
+                unit: apiCookingItemData.unit!,
+                price: apiCookingItemData.price!,
+             };
+            await addCookingItemAPI(fullCookingItemData);
         }
         setCookingItems(await getAllCookingItemsAPI());
         closeModal();
@@ -562,7 +580,7 @@ const App: React.FC = () => {
         await deleteCookingItemAPI(id);
         setCookingItems(await getAllCookingItemsAPI());
         alert('Cooking item deleted. Customer orders might need to be refreshed or updated.');
-        setCustomers(await getAllCustomersAPI()); // Refresh customers
+        setCustomers(await getAllCustomersAPI()); 
     } catch (error) {
         handleApiError(`Failed to delete cooking item ${id}.`, error);
     }
@@ -576,79 +594,76 @@ const App: React.FC = () => {
     }
     setApiError(null);
 
-    // Prepare the base customer payload for POST/PATCH to the main customers table
-    const customerPayload: Partial<Customer> = {
+    const customerPayload: Partial<Customer> & {id: string} = { 
+        id: submittedCustomerData.id, 
         name: submittedCustomerData.name,
         imageUrl: submittedCustomerData.imageUrl || placeholderImage(DEFAULT_IMAGE_SIZE, DEFAULT_IMAGE_SIZE, submittedCustomerData.name),
         phone: submittedCustomerData.phone,
         address: submittedCustomerData.address,
         numberOfPersons: submittedCustomerData.numberOfPersons,
-        // Assign userId if it's a new customer being added by an Admin or User
-        userId: (currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.USER) && !editingItem?.userId ? currentUser.id : editingItem?.userId,
+        userId: submittedCustomerData.userId || ( (currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.USER) && !editingItem?.userId ? currentUser.id : editingItem?.userId),
     };
 
     try {
         let savedCustomer: Customer;
-        if (editingItem && editingItem.id) { // Editing existing customer
+        if (editingItem && editingItem.id) { 
             savedCustomer = await updateCustomerAPI(editingItem.id, customerPayload);
-        } else { // Adding new customer
-            savedCustomer = await addCustomerAPI(customerPayload as Omit<Customer, 'id'>);
-            // Deduct credit if user is not Suprem
+        } else { 
+            savedCustomer = await addCustomerAPI(customerPayload as Omit<Customer, 'id' | 'generatedOrder'>); 
             if (currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.USER) {
                 const newCreditCount = currentUser.credits - 1;
                 const updatedUser = await updateUserAPI(currentUser.id, { credits: newCreditCount });
                 setCurrentUser(updatedUser);
                 localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(updatedUser));
-                setUsers(await getAllUsersAPI()); // Ensure users list is fresh if other parts of UI display it
+                setUsers(await getAllUsersAPI()); 
                 alert('Customer added! 1 credit used.');
             } else {
                 alert('Customer added!');
             }
         }
 
-        // --- Manage Join Table for Dishes ---
         const currentSelectedDishRecords = editingItem ? await getCustomerSelectedDishesAPI(savedCustomer.id) : [];
         const newDishIds = submittedCustomerData.selectedDishes.map(sd => sd.dishId);
 
-        // Delete deselected dishes
         for (const record of currentSelectedDishRecords) {
             if (!newDishIds.includes(record.dish_id)) {
                 await deleteCustomerSelectedDishAPI(record.id);
             }
         }
-        // Add newly selected dishes
         for (const dishId of newDishIds) {
             if (!currentSelectedDishRecords.find(r => r.dish_id === dishId)) {
-                await addCustomerSelectedDishAPI({ customer_id: savedCustomer.id, dish_id: dishId });
+                await addCustomerSelectedDishAPI({ 
+                    customer_id: savedCustomer.id, 
+                    dish_id: dishId 
+                });
             }
         }
 
-        // --- Manage Join Table for Cooking Items ---
         const currentSelectedCookingItemRecords = editingItem ? await getCustomerSelectedCookingItemsAPI(savedCustomer.id) : [];
-        // Map new selections for easier lookup: cookingItemId -> quantity
         const newCookingItemSelectionsMap = new Map(submittedCustomerData.selectedCookingItems.map(sci => [sci.cookingItemId, sci.quantity]));
 
-        // Delete or update existing cooking item selections
         for (const record of currentSelectedCookingItemRecords) {
-            if (!newCookingItemSelectionsMap.has(record.cooking_item_id)) { // Item was deselected
+            if (!newCookingItemSelectionsMap.has(record.cooking_item_id)) { 
                 await deleteCustomerSelectedCookingItemAPI(record.id);
-            } else { // Item still selected, check if quantity changed
+            } else { 
                 const newQuantity = newCookingItemSelectionsMap.get(record.cooking_item_id)!;
                 if (record.quantity !== newQuantity) {
                     await updateCustomerSelectedCookingItemAPI(record.id, { quantity: newQuantity });
                 }
-                newCookingItemSelectionsMap.delete(record.cooking_item_id); // Remove from map as it's processed
+                newCookingItemSelectionsMap.delete(record.cooking_item_id); 
             }
         }
-        // Add new cooking item selections (those remaining in the map)
         for (const [cookingItemId, quantity] of newCookingItemSelectionsMap) {
-            await addCustomerSelectedCookingItemAPI({ customer_id: savedCustomer.id, cooking_item_id: cookingItemId, quantity });
+            await addCustomerSelectedCookingItemAPI({ 
+                customer_id: savedCustomer.id, 
+                cooking_item_id: cookingItemId, 
+                quantity 
+            });
         }
         
-        // After saving customer and their selections, regenerate the order summary
-        await handleGenerateOrder(savedCustomer.id, true); // Force regenerate based on form selections
+        await handleGenerateOrder(savedCustomer.id, true); 
         
-        setCustomers(await getAllCustomersAPI()); // Refresh customer list in UI
+        setCustomers(await getAllCustomersAPI()); 
         closeModal();
 
     } catch (error) {
@@ -657,26 +672,26 @@ const App: React.FC = () => {
   };
 
 
-  const handleSaveProfile = async (profileData: Customer) => { // Customer type is used for form structure
+  const handleSaveProfile = async (profileData: Customer) => { 
     if (!currentUser) return;
     setApiError(null);
 
     const updatedUserDetails: Partial<AuthUser> = {
-        username: profileData.name, // 'name' from Customer form maps to 'username' in AuthUser
+        username: profileData.name, 
         imageUrl: profileData.imageUrl || currentUser.imageUrl || placeholderImage(DEFAULT_IMAGE_SIZE,DEFAULT_IMAGE_SIZE, profileData.name),
         phone: profileData.phone,
         address: profileData.address,
         email: profileData.email || currentUser.email,
-        cateringName: profileData.cateringName || currentUser.cateringName, // Use cateringName from form
+        cateringName: profileData.cateringName || currentUser.cateringName, 
     };
     if(profileData.newPassword && profileData.newPassword.length > 0) {
-        updatedUserDetails.password = profileData.newPassword; // Update password if provided
+        updatedUserDetails.password = profileData.newPassword; 
     }
 
     try {
         const updatedUser = await updateUserAPI(currentUser.id, updatedUserDetails);
-        setUsers(await getAllUsersAPI()); // Refresh users list
-        setCurrentUser(updatedUser); // Update current user state
+        setUsers(await getAllUsersAPI()); 
+        setCurrentUser(updatedUser); 
         localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(updatedUser));
         alert('Profile updated successfully!');
         closeModal();
@@ -692,7 +707,6 @@ const App: React.FC = () => {
     }
     setApiError(null);
     try {
-        // Delete related records from join tables first
         const selectedDishes = await getCustomerSelectedDishesAPI(id);
         for (const record of selectedDishes) {
             await deleteCustomerSelectedDishAPI(record.id);
@@ -702,7 +716,6 @@ const App: React.FC = () => {
             await deleteCustomerSelectedCookingItemAPI(record.id);
         }
 
-        // Then delete the customer
         await deleteCustomerAPI(id);
         setCustomers(await getAllCustomersAPI());
         alert('Customer record deleted.');
@@ -718,12 +731,10 @@ const App: React.FC = () => {
     if (conversion) {
         return { quantityInBase: quantity * conversion.toBase, baseUnit: conversion.baseUnit };
     }
-    // If the unit is already a base unit (or not in conversion map, treat as discrete)
     if (Object.values(IngredientBaseUnits).includes(unitLower as any)) {
         return { quantityInBase: quantity, baseUnit: unitLower };
     }
-    // Fallback for units not in map and not base units (e.g. 'bunch', 'pinch' if not defined)
-    return { quantityInBase: quantity, baseUnit: unitLower }; // Treat as a discrete unit
+    return { quantityInBase: quantity, baseUnit: unitLower }; 
   };
 
   const formatDisplayQuantity = (quantityInBase: number, baseUnit: string): { displayQuantity: number; displayUnit: string } => {
@@ -739,27 +750,22 @@ const App: React.FC = () => {
         }
         return { displayQuantity: parseFloat(quantityInBase.toFixed(3)), displayUnit: 'ml' };
     }
-    // For other base units (piece, leaves, etc.) or unconvertible units
     return { displayQuantity: parseFloat(quantityInBase.toFixed(3)), displayUnit: baseUnit };
   };
 
-  // Calculate cost of a single dish based on its ingredients and master ingredient prices
   const calculateDishCost = (dish: Dish, allIngredients: Ingredient[]): number => {
     if (!dish || !allIngredients) return 0;
     let totalCost = 0;
     dish.ingredients.forEach(dishIng => {
         const masterIng = allIngredients.find(i => i.id === dishIng.ingredientId);
-        if (masterIng && masterIng.quantity > 0 && masterIng.price >= 0) { // Ensure master ingredient has valid quantity for price and price is non-negative
-            // Convert dish ingredient quantity to its base unit using masterIng.unit (assuming dishIng quantity is in terms of masterIng.unit)
+        if (masterIng && masterIng.quantity > 0 && masterIng.price >= 0) { 
             const { quantityInBase: dishIngBaseQty, baseUnit: dishIngBaseUnit } = convertToBaseUnit(dishIng.quantity, masterIng.unit); 
-            // Convert master ingredient's own quantity (for which price is defined) to its base unit
             const { quantityInBase: masterIngBaseQtyForPrice, baseUnit: masterIngBaseUnitForPrice } = convertToBaseUnit(masterIng.quantity, masterIng.unit);
 
-            if (dishIngBaseUnit === masterIngBaseUnitForPrice && masterIngBaseQtyForPrice > 0) { // Ensure units match and divisor is not zero
+            if (dishIngBaseUnit === masterIngBaseUnitForPrice && masterIngBaseQtyForPrice > 0) { 
                  const pricePerMasterBaseUnit = masterIng.price / masterIngBaseQtyForPrice;
                  totalCost += dishIngBaseQty * pricePerMasterBaseUnit;
             } else {
-                // Log if units don't match after conversion or master quantity for price is zero
                 console.warn(`Cannot calculate cost for ingredient ${getTranslatedText(masterIng.name, currentUser?.preferredLanguage || Language.EN)} in dish ${getTranslatedText(dish.name, currentUser?.preferredLanguage || Language.EN)}. Unit mismatch or zero quantity for price.`);
             }
         }
@@ -776,47 +782,40 @@ const App: React.FC = () => {
         let cumulativeIngredientsResult: CumulativeIngredient[] = [];
         let totalIngredientCost = 0;
 
-        // Fetch current selections from join tables
         const customerDishSelectionRecords = await getCustomerSelectedDishesAPI(customerId);
         const customerCookingItemSelectionRecords = await getCustomerSelectedCookingItemsAPI(customerId);
 
-        // Convert join table records to the format used in calculations
         const effectiveSelectedDishes: CustomerDishSelection[] = customerDishSelectionRecords.map(record => ({ dishId: record.dish_id }));
         const effectiveSelectedCookingItems: CustomerCookingItemSelection[] = customerCookingItemSelectionRecords.map(record => ({
             cookingItemId: record.cooking_item_id,
-            quantity: record.quantity // Assuming 'quantity' is a field in your join table record
+            quantity: record.quantity 
         }));
 
 
-        // Logic for CUMULATIVE INGREDIENTS
-        // If not forcing regeneration from form, and an order already exists, try to re-price existing items
         if (!forceRegenerateFromFormSelections && customer.generatedOrder && customer.generatedOrder.cumulativeIngredients.length > 0) {
             cumulativeIngredientsResult = customer.generatedOrder.cumulativeIngredients.map(orderIng => {
                 const masterIngredient = ingredients.find(i => i.id === orderIng.masterIngredientId);
-                let ingredientTotalPrice = orderIng.totalPrice; // Default to old price
-                let name = orderIng.name; // Default to old name
+                let ingredientTotalPrice = orderIng.totalPrice; 
+                let name = orderIng.name; 
 
                 if (masterIngredient && masterIngredient.quantity > 0 && masterIngredient.price >= 0) {
-                    name = getTranslatedText(masterIngredient.name, currentUser.preferredLanguage); // Update name
-                    // Convert order item's quantity to base unit (using its stored unit)
+                    name = getTranslatedText(masterIngredient.name, currentUser.preferredLanguage); 
                     const { quantityInBase: orderItemBaseQty, baseUnit: orderItemBaseU } = convertToBaseUnit(orderIng.totalQuantity, orderIng.unit);
-                    // Convert master ingredient's quantity (for which price is defined) to base unit
                     const { quantityInBase: masterItemBaseQtyForItsPrice, baseUnit: masterItemBaseUForItsPrice } = convertToBaseUnit(masterIngredient.quantity, masterIngredient.unit);
 
                     if (masterItemBaseQtyForItsPrice > 0 && orderItemBaseU === masterItemBaseUForItsPrice) {
                         const pricePerBaseMasterUnit = masterIngredient.price / masterItemBaseQtyForItsPrice;
-                        ingredientTotalPrice = orderItemBaseQty * pricePerBaseMasterUnit; // Recalculate price
+                        ingredientTotalPrice = orderItemBaseQty * pricePerBaseMasterUnit; 
                     } else {
-                        ingredientTotalPrice = 0; // Cannot calculate price if units mismatch or master qty for price is 0
+                        ingredientTotalPrice = 0; 
                     }
                 } else if (!masterIngredient) {
-                     // If master ingredient is deleted, we might want to mark this item or set its price to 0
-                     ingredientTotalPrice = 0; // Or handle as an error/warning
+                     ingredientTotalPrice = 0; 
                 }
                 totalIngredientCost += ingredientTotalPrice;
                 return { ...orderIng, name, totalPrice: ingredientTotalPrice };
             });
-        } else { // Regenerate ingredients from scratch based on current dish selections
+        } else { 
             const cumulativeIngredientsMap = new Map<string, { totalQuantityInMasterUnit: number; masterIngredientRef: Ingredient }>();
             effectiveSelectedDishes.forEach(sd => {
                 const dish = dishes.find(d => d.id === sd.dishId);
@@ -824,7 +823,6 @@ const App: React.FC = () => {
                     dish.ingredients.forEach(di => {
                         const masterIngredient = ingredients.find(i => i.id === di.ingredientId);
                         if (masterIngredient) {
-                            // Assume di.quantity is in terms of masterIngredient.unit
                             const quantityNeededForOrderInMasterUnit = di.quantity * customer.numberOfPersons;
                             const current = cumulativeIngredientsMap.get(masterIngredient.id) || { totalQuantityInMasterUnit: 0, masterIngredientRef: masterIngredient };
                             current.totalQuantityInMasterUnit += quantityNeededForOrderInMasterUnit;
@@ -839,9 +837,7 @@ const App: React.FC = () => {
                 let ingredientTotalPrice = 0;
 
                 if (masterIng.quantity > 0 && masterIng.price >= 0) {
-                    // Convert total required quantity for the order to its base unit
                     const { quantityInBase: totalOrderBaseQty, baseUnit: totalOrderBaseUnit } = convertToBaseUnit(entry.totalQuantityInMasterUnit, masterIng.unit);
-                    // Convert master ingredient's own quantity (for which price is defined) to its base unit
                     const { quantityInBase: masterBaseQtyForPrice, baseUnit: masterBaseUnitForPrice } = convertToBaseUnit(masterIng.quantity, masterIng.unit);
 
                     if (masterBaseQtyForPrice > 0 && totalOrderBaseUnit === masterBaseUnitForPrice) {
@@ -851,12 +847,11 @@ const App: React.FC = () => {
                 }
                 
                 totalIngredientCost += ingredientTotalPrice;
-                // Format the final display quantity (e.g., convert grams to kg if large enough)
                 const { quantityInBase: finalBaseQty, baseUnit: finalBaseUnit } = convertToBaseUnit(entry.totalQuantityInMasterUnit, masterIng.unit);
                 const { displayQuantity, displayUnit } = formatDisplayQuantity(finalBaseQty, finalBaseUnit);
                 
                 return { 
-                    id: Date.now().toString(36) + Math.random().toString(36).substring(2,9), // Generate new ID for this calculation
+                    id: generateUniqueId(), 
                     masterIngredientId, 
                     name: getTranslatedText(masterIng.name, currentUser.preferredLanguage), 
                     totalQuantity: displayQuantity, 
@@ -866,17 +861,14 @@ const App: React.FC = () => {
             });
         }
 
-        // Logic for SELECTED COOKING ITEMS
         let selectedCookingItemsDetails: SelectedCookingItemDetail[] = [];
         let totalCookingItemCost = 0;
 
-        // Determine the source of cooking items for the order calculation
         const sourceCookingItemsForOrder = (forceRegenerateFromFormSelections || !customer.generatedOrder?.selectedCookingItems)
-            ? effectiveSelectedCookingItems // Use current selections from join table if forcing or no previous order
-            : customer.generatedOrder.selectedCookingItems; // Use previously saved order items if not forcing
+            ? effectiveSelectedCookingItems 
+            : customer.generatedOrder.selectedCookingItems; 
 
         sourceCookingItemsForOrder.forEach(sci => {
-            // sci can be CustomerCookingItemSelection or SelectedCookingItemDetail
             const masterItemId = (sci as CustomerCookingItemSelection).cookingItemId || (sci as SelectedCookingItemDetail).masterCookingItemId;
             const quantity = sci.quantity;
             const masterItem = cookingItems.find(ci => ci.id === masterItemId);
@@ -885,20 +877,19 @@ const App: React.FC = () => {
                 const itemTotalPrice = quantity * masterItem.price;
                 totalCookingItemCost += itemTotalPrice;
                 selectedCookingItemsDetails.push({
-                    id: (sci as SelectedCookingItemDetail).id || Date.now().toString(36) + Math.random().toString(36).substring(2,9), // Use existing ID or generate new
+                    id: (sci as SelectedCookingItemDetail).id || generateUniqueId(), 
                     masterCookingItemId: masterItem.id,
                     name: getTranslatedText(masterItem.name, currentUser.preferredLanguage),
                     quantity: quantity,
                     unit: masterItem.unit,
-                    price: masterItem.price, // Price per unit
+                    price: masterItem.price, 
                     totalPrice: itemTotalPrice
                 });
             } else {
-                 // If not forcing regeneration and master item is missing, keep old data but mark it
                  if (!forceRegenerateFromFormSelections && customer.generatedOrder?.selectedCookingItems && (sci as SelectedCookingItemDetail).name) {
                      selectedCookingItemsDetails.push({
                          ...(sci as SelectedCookingItemDetail),
-                         totalPrice: 0, // No way to price it
+                         totalPrice: 0, 
                          name: `${(sci as SelectedCookingItemDetail).name} (Master Item Missing)`
                      });
                  }
@@ -913,9 +904,8 @@ const App: React.FC = () => {
             totalOrderCost: totalOrderCost
         };
         
-        // Save the updated/new generatedOrder back to the customer
         const updatedCustomer = await updateCustomerAPI(customer.id, { generatedOrder });
-        setCustomers(await getAllCustomersAPI()); // Refresh customer list in UI
+        setCustomers(await getAllCustomersAPI()); 
         
     } catch (error) {
         handleApiError(`Failed to generate order for customer ${customerId}.`, error);
@@ -939,7 +929,7 @@ const App: React.FC = () => {
             customerId,
             orderLineItemId,
             isAdding: false,
-            existingOrderItemData: { // Pass data for pre-filling the form
+            existingOrderItemData: { 
                 name: orderItem.name,
                 quantity: orderItem.totalQuantity,
                 unit: orderItem.unit,
@@ -950,13 +940,12 @@ const App: React.FC = () => {
         setModalOpen(true);
     };
     
-    // Handles saving (add/edit) of a single ingredient line item in an existing order
     const handleSaveOrderIngredient = async (data: {
         customerId: string;
-        orderLineItemId?: string; // ID of the CumulativeIngredient if editing
-        masterIngredientId?: string; // Master Ingredient ID if adding new
+        orderLineItemId?: string; 
+        masterIngredientId?: string; 
         quantity: number;
-        unit: string; // The unit chosen by the user in the form for this quantity
+        unit: string; 
         isAdding: boolean;
     }) => {
         if (!currentUser) return;
@@ -968,7 +957,6 @@ const App: React.FC = () => {
             return;
         }
     
-        // Ensure generatedOrder structure exists
         let tempGeneratedOrder = customerToUpdate.generatedOrder 
             ? { ...customerToUpdate.generatedOrder, cumulativeIngredients: [...customerToUpdate.generatedOrder.cumulativeIngredients] }
             : { cumulativeIngredients: [], selectedCookingItems: [], totalOrderCost: 0 };
@@ -976,20 +964,17 @@ const App: React.FC = () => {
         if (data.isAdding && data.masterIngredientId) {
             const masterIngredient = ingredients.find(ing => ing.id === data.masterIngredientId);
             if (masterIngredient) {
-                // Convert the newly added quantity and unit to a base form for aggregation
                 const { quantityInBase: newlyAddedBaseQuantity, baseUnit: newlyAddedBaseUnit } = convertToBaseUnit(data.quantity, data.unit);
                 
-                // Check if an item with the same masterIngredientId already exists in the order
                 const existingItemIndex = tempGeneratedOrder.cumulativeIngredients.findIndex(
                     item => item.masterIngredientId === data.masterIngredientId
                 );
 
-                if (existingItemIndex > -1) { // Item exists, try to aggregate
+                if (existingItemIndex > -1) { 
                     const existingOrderItem = tempGeneratedOrder.cumulativeIngredients[existingItemIndex];
-                    // Convert existing item's quantity and unit to its base form
                     const { quantityInBase: currentOrderBaseQuantity, baseUnit: currentOrderBaseUnit } = convertToBaseUnit(existingOrderItem.totalQuantity, existingOrderItem.unit);
                     
-                    if (newlyAddedBaseUnit === currentOrderBaseUnit) { // Only aggregate if base units match
+                    if (newlyAddedBaseUnit === currentOrderBaseUnit) { 
                         const totalBaseQuantity = newlyAddedBaseQuantity + currentOrderBaseQuantity;
                         const { displayQuantity: newTotalDisplayQuantity, displayUnit: newTotalDisplayUnit } = formatDisplayQuantity(totalBaseQuantity, newlyAddedBaseUnit);
                         
@@ -997,47 +982,39 @@ const App: React.FC = () => {
                             ...existingOrderItem,
                             totalQuantity: newTotalDisplayQuantity,
                             unit: newTotalDisplayUnit,
-                            // Price will be recalculated by handleGenerateOrder
                         };
                     } else {
-                        // If base units don't match, we cannot simply add quantities.
-                        // This might indicate an issue or require more complex conversion logic not yet implemented.
-                        // For now, treat as an error or add as a separate line item if desired (latter not implemented here).
                         handleApiError(`Cannot aggregate ingredient: unit types mismatch (${newlyAddedBaseUnit} vs ${currentOrderBaseUnit}). Add as a new line if intended or ensure units are compatible.`);
-                        closeModal(); // Or keep modal open for correction
+                        closeModal(); 
                         return;
                     }
-                } else { // Item does not exist, add as new
-                    // Convert the quantity and unit to a displayable format
+                } else { 
                     const { displayQuantity: actualDisplayQuantity, displayUnit: actualDisplayUnit } = formatDisplayQuantity(newlyAddedBaseQuantity, newlyAddedBaseUnit);
                     const newOrderItem: CumulativeIngredient = {
-                        id: Date.now().toString(36) + Math.random().toString(36).substring(2,9), // New unique ID for this line item
+                        id: generateUniqueId(), 
                         masterIngredientId: data.masterIngredientId,
                         name: getTranslatedText(masterIngredient.name, currentUser.preferredLanguage),
-                        totalQuantity: actualDisplayQuantity, // Use formatted quantity
-                        unit: actualDisplayUnit, // Use formatted unit
-                        totalPrice: 0, // Will be recalculated
+                        totalQuantity: actualDisplayQuantity, 
+                        unit: actualDisplayUnit, 
+                        totalPrice: 0, 
                     };
                     tempGeneratedOrder.cumulativeIngredients.push(newOrderItem);
                 }
             }
-        } else if (!data.isAdding && data.orderLineItemId) { // Editing an existing line item
+        } else if (!data.isAdding && data.orderLineItemId) { 
             tempGeneratedOrder.cumulativeIngredients = tempGeneratedOrder.cumulativeIngredients.map(item => {
                 if (item.id === data.orderLineItemId) {
-                     // Convert the edited quantity and unit to a displayable format
                      const { quantityInBase, baseUnit } = convertToBaseUnit(data.quantity, data.unit);
                      const { displayQuantity: actualDisplayQuantity, displayUnit: actualDisplayUnit } = formatDisplayQuantity(quantityInBase, baseUnit);
-                    return { ...item, totalQuantity: actualDisplayQuantity, unit: actualDisplayUnit }; // Price will be recalculated
+                    return { ...item, totalQuantity: actualDisplayQuantity, unit: actualDisplayUnit }; 
                 }
                 return item;
             });
         }
         
         try {
-            // Update customer with the temporarily modified order (prices not yet final)
             await updateCustomerAPI(data.customerId, { generatedOrder: tempGeneratedOrder }); 
-            // Recalculate the entire order to update prices and consolidate if necessary
-            await handleGenerateOrder(data.customerId, false); // false = don't force from form, use what's in DB (which we just updated)
+            await handleGenerateOrder(data.customerId, false); 
             closeModal();
         } catch (error) {
             handleApiError("Failed to save order ingredient.", error);
@@ -1053,18 +1030,15 @@ const App: React.FC = () => {
             return;
          }
         
-        // Filter out the ingredient to be deleted
         const updatedIngredients = customer.generatedOrder.cumulativeIngredients.filter(
             item => item.id !== orderLineItemId
         );
         const tempGeneratedOrder: GeneratedOrder = {
             ...customer.generatedOrder,
             cumulativeIngredients: updatedIngredients,
-            // totalOrderCost will be wrong here, but handleGenerateOrder will fix it
         };
         try {
             await updateCustomerAPI(customerId, {generatedOrder: tempGeneratedOrder});
-            // Recalculate order to update total cost
             await handleGenerateOrder(customerId, false); 
             alert('Ingredient removed from order.');
         } catch (error) {
@@ -1093,18 +1067,17 @@ const App: React.FC = () => {
                 name: orderItem.name,
                 quantity: orderItem.quantity,
                 unit: orderItem.unit,
-                price: orderItem.price, // Price per unit
+                price: orderItem.price, 
             },
         });
         setModalType('orderCookingItem');
         setModalOpen(true);
     };
 
-    // Handles saving (add/edit) of a single cooking item line item in an existing order
     const handleSaveOrderCookingItem = async (data: {
         customerId: string;
-        orderLineItemId?: string; // ID of the SelectedCookingItemDetail if editing
-        masterCookingItemId?: string; // Master Cooking Item ID if adding new
+        orderLineItemId?: string; 
+        masterCookingItemId?: string; 
         quantity: number;
         isAdding: boolean;
     }) => {
@@ -1124,37 +1097,36 @@ const App: React.FC = () => {
         if (data.isAdding && data.masterCookingItemId) {
             const masterItem = cookingItems.find(ci => ci.id === data.masterCookingItemId);
             if (masterItem) {
-                // Check if an item with the same masterCookingItemId already exists
                 const existingItemIndex = tempGeneratedOrder.selectedCookingItems.findIndex(
                     item => item.masterCookingItemId === data.masterCookingItemId
                 );
 
-                if (existingItemIndex > -1) { // Item exists, update its quantity
+                if (existingItemIndex > -1) { 
                     tempGeneratedOrder.selectedCookingItems[existingItemIndex].quantity += data.quantity;
-                } else { // Item does not exist, add as new
+                } else { 
                     const newOrderItem: SelectedCookingItemDetail = {
-                        id: Date.now().toString(36) + Math.random().toString(36).substring(2,9), // New unique ID
+                        id: generateUniqueId(), 
                         masterCookingItemId: data.masterCookingItemId,
                         name: getTranslatedText(masterItem.name, currentUser.preferredLanguage),
                         quantity: data.quantity,
                         unit: masterItem.unit,
-                        price: masterItem.price, // Price per unit
-                        totalPrice: 0, // Will be recalculated
+                        price: masterItem.price, 
+                        totalPrice: 0, 
                     };
                     tempGeneratedOrder.selectedCookingItems.push(newOrderItem);
                 }
             }
-        } else if (!data.isAdding && data.orderLineItemId) { // Editing an existing line item
+        } else if (!data.isAdding && data.orderLineItemId) { 
             tempGeneratedOrder.selectedCookingItems = tempGeneratedOrder.selectedCookingItems.map(item => {
                 if (item.id === data.orderLineItemId) {
-                    return { ...item, quantity: data.quantity }; // Price will be recalculated
+                    return { ...item, quantity: data.quantity }; 
                 }
                 return item;
             });
         }
         try {
             await updateCustomerAPI(data.customerId, { generatedOrder: tempGeneratedOrder });
-            await handleGenerateOrder(data.customerId, false); // Recalculate the entire order
+            await handleGenerateOrder(data.customerId, false); 
             closeModal();
         } catch (error) {
             handleApiError("Failed to save order cooking item.", error);
@@ -1170,7 +1142,6 @@ const App: React.FC = () => {
             return;
         }
 
-        // Filter out the cooking item to be deleted
         const updatedCookingItems = customer.generatedOrder.selectedCookingItems.filter(
             item => item.id !== orderLineItemId
         );
@@ -1180,7 +1151,7 @@ const App: React.FC = () => {
         };
         try {
             await updateCustomerAPI(customerId, {generatedOrder: tempGeneratedOrder});
-            await handleGenerateOrder(customerId, false); // Recalculate order
+            await handleGenerateOrder(customerId, false); 
             alert('Cooking item removed from order.');
         } catch (error) {
             handleApiError("Failed to delete order cooking item.", error);
@@ -1197,21 +1168,18 @@ const App: React.FC = () => {
             const ingredientsFromAPI = await getAllIngredientsAPI();
             const dataToExport = ingredientsFromAPI.map(ing => {
                 const row: any = {
-                    id: ing.id, // Good to have ID for re-import/update
-                    // name: getTranslatedText(ing.name, Language.EN), // Base name for consistency
+                    id: ing.id, 
                     imageUrl: ing.imageUrl,
                     quantity: ing.quantity,
                     unit: ing.unit,
-                    price: ing.price, // Price for the given quantity and unit
+                    price: ing.price, 
                 };
-                // Add localized names
                 SupportedLanguages.forEach(lang => {
                     row[`name_${lang}`] = ing.name[lang] || '';
                 });
                 return row;
             });
 
-            // Define headers for Excel, including localized names
             const headers = ["id", ...SupportedLanguages.map(lang => `name_${lang}`), "imageUrl", "quantity", "unit", "price"]; 
             const worksheet = XLSX.utils.json_to_sheet(dataToExport, { header: headers });
             const workbook = XLSX.utils.book_new();
@@ -1257,16 +1225,14 @@ const App: React.FC = () => {
                     return;
                 }
 
-                // Validate headers
                 const actualHeaders = jsonData.length > 0 ? Object.keys(jsonData[0]) : [];
-                // Core required headers for functionality, EN name is essential
                 const coreHeaders = [`name_${Language.EN}`, "quantity", "unit", "price"]; 
                 const missingCoreHeaders = coreHeaders.filter(header => !actualHeaders.includes(header));
 
                 if (missingCoreHeaders.length > 0) {
                     alert(getUIText(UITranslationKeys.EXCEL_HEADER_MISMATCH_ALERT, currentUser.preferredLanguage, Language.EN, {
                         expectedHeaders: coreHeaders.join(', '),
-                        actualHeaders: actualHeaders.join(', ') // Provide actual headers for user to see
+                        actualHeaders: actualHeaders.join(', ') 
                     }));
                     return;
                 }
@@ -1283,7 +1249,6 @@ const App: React.FC = () => {
                         if (row[`name_${lang}`]) nameLocalized[lang] = String(row[`name_${lang}`]).trim();
                     });
 
-                    // Ensure there's at least one name, and prioritize English or fallback
                     if (Object.keys(nameLocalized).length === 0) {
                         errorCount++;
                         errorMessages.push(`Skipped row: Name is missing. Row: ${JSON.stringify(row)}`);
@@ -1291,9 +1256,8 @@ const App: React.FC = () => {
                         continue;
                     }
                      if (!nameLocalized[Language.EN] && nameLocalized[currentUser.preferredLanguage]) {
-                        nameLocalized[Language.EN] = nameLocalized[currentUser.preferredLanguage]; // Fallback to user's lang if EN missing
+                        nameLocalized[Language.EN] = nameLocalized[currentUser.preferredLanguage]; 
                     } else if (!nameLocalized[Language.EN] && Object.keys(nameLocalized).length > 0) {
-                         // Fallback to the first available name if EN and preferred lang are missing
                          nameLocalized[Language.EN] = Object.values(nameLocalized)[0];
                     }
 
@@ -1309,7 +1273,8 @@ const App: React.FC = () => {
                         continue;
                     }
 
-                    const ingredientPayload = {
+                    const ingredientPayload: Partial<Ingredient> & {id?: string} = { 
+                        id: row.id ? String(row.id) : undefined, 
                         name: nameLocalized,
                         imageUrl: row.imageUrl || placeholderImage(DEFAULT_IMAGE_SIZE, DEFAULT_IMAGE_SIZE, getTranslatedText(nameLocalized, currentUser.preferredLanguage)),
                         quantity,
@@ -1318,17 +1283,18 @@ const App: React.FC = () => {
                     };
 
                     try {
-                        if (row.id) { // If ID is present, try to update
-                            const existing = await getIngredientAPI(String(row.id)); // Check if ingredient exists
+                        if (ingredientPayload.id) { 
+                            const existing = await getIngredientAPI(ingredientPayload.id); 
                             if (existing) {
-                                await updateIngredientAPI(String(row.id), ingredientPayload);
+                                await updateIngredientAPI(ingredientPayload.id, ingredientPayload);
                                 updatedCount++;
-                            } else { // ID provided but not found, so add as new
-                                await addIngredientAPI(ingredientPayload);
+                            } else { 
+                                delete ingredientPayload.id; 
+                                await addIngredientAPI(ingredientPayload as Omit<Ingredient, 'id'>);
                                 importedCount++;
                             }
-                        } else { // No ID, add as new
-                            await addIngredientAPI(ingredientPayload);
+                        } else { 
+                            await addIngredientAPI(ingredientPayload as Omit<Ingredient, 'id'>);
                             importedCount++;
                         }
                     } catch (apiErr: any) {
@@ -1338,7 +1304,7 @@ const App: React.FC = () => {
                     }
                 }
                 
-                setIngredients(await getAllIngredientsAPI()); // Refresh ingredient list
+                setIngredients(await getAllIngredientsAPI()); 
                 setIsLoadingIngredients(false);
                 let summaryMessage = `Import complete. Added: ${importedCount}, Updated: ${updatedCount}.`;
                 if (errorCount > 0) {
@@ -1352,7 +1318,6 @@ const App: React.FC = () => {
                 alert(`${getUIText(UITranslationKeys.EXCEL_IMPORT_FAILURE_ALERT, currentUser.preferredLanguage)} Details: ${err.message}`);
                 setIsLoadingIngredients(false);
             } finally {
-                // Reset file input to allow re-uploading the same file if needed
                 if (importIngredientsInputRef.current) {
                     importIngredientsInputRef.current.value = "";
                 }
@@ -1375,7 +1340,6 @@ const App: React.FC = () => {
         
         if (nameToSearch.includes(lowerSearchTerm)) return true;
 
-        // Additional search fields for customers
         if (type === 'customer') {
           if (item.phone?.toLowerCase().includes(lowerSearchTerm)) return true;
           if (item.address?.toLowerCase().includes(lowerSearchTerm)) return true;
@@ -1456,10 +1420,26 @@ const App: React.FC = () => {
   );
 
   const renderPageContent = () => {
-    if (!isAuthCheckComplete || overallInitialLoading) {
+    if (!isAuthCheckComplete || overallInitialLoading && !apiError) { 
       return <div className="flex justify-center items-center h-screen"><p className="text-xl text-slate-600">Loading application data...</p></div>;
     }
     
+    if (overallInitialLoading && apiError) { 
+        return (
+            <div className="flex flex-col justify-center items-center h-[calc(100vh-10rem)] bg-red-50 p-4 rounded-lg shadow">
+                <InformationCircleIcon className="w-12 h-12 text-red-500 mb-3" />
+                <h2 className="text-xl font-bold text-red-700 mb-2">Failed to Load Application</h2>
+                <p className="text-red-600 text-center text-sm mb-3">
+                    The application could not start correctly due to an API error. Please check the error message below or in the header.
+                </p>
+                <p className="text-xs text-slate-600 bg-red-100 p-2 rounded max-w-lg overflow-auto">{apiError}</p>
+                 <p className="text-sm text-slate-700 text-center mt-4">
+                    Ensure <code className="bg-red-200 text-red-800 px-1 rounded">API_BASE_URL</code>, table paths (especially the specific table ID mentioned in the error), and <code className="bg-red-200 text-red-800 px-1 rounded">NOCODB_API_TOKEN</code> in <code className="bg-red-200 text-red-800 px-1 rounded">src/apiConstants.ts</code> are correct.
+                </p>
+            </div>
+        );
+    }
+
     if (currentPage === Page.PublicHome && !currentUser) {
         return <PublicHomePage onNavigate={setCurrentPage} />;
     }
@@ -1471,7 +1451,6 @@ const App: React.FC = () => {
     }
 
     if (!currentUser) {
-         // This case should ideally not be reached if auth flow is correct, but as a fallback:
          setCurrentPage(Page.PublicHome); 
          return <PublicHomePage onNavigate={setCurrentPage} />;
     }
@@ -1678,7 +1657,7 @@ const App: React.FC = () => {
                         onUpdateUserDetailsBySuprem={handleUpdateUserDetailsBySuprem}
                     />;
          case Page.Profile:
-            const profileDataForForm: Customer = { // Adapt AuthUser to Customer for the form
+            const profileDataForForm: Customer = { 
                 id: currentUser.id,
                 name: currentUser.username,
                 imageUrl: currentUser.imageUrl || '',
@@ -1687,7 +1666,6 @@ const App: React.FC = () => {
                 email: currentUser.email,
                 cateringName: currentUser.cateringName,
                 credits: currentUser.credits,
-                // These are not directly edited here or are placeholders for the Customer type
                 numberOfPersons: 1, 
                 selectedDishes: [],
                 selectedCookingItems: [],
@@ -1714,7 +1692,6 @@ const App: React.FC = () => {
   };
 
   const generateUniqueId = (): string => {
-    // This might still be needed for client-side temporary IDs or if backend doesn't generate all IDs
     return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
   };
 
@@ -1734,7 +1711,7 @@ const App: React.FC = () => {
             <CustomerForm
                 onSave={handleSaveProfile}
                 onCancel={closeModal}
-                existingCustomer={{ // Adapt AuthUser to Customer for the form
+                existingCustomer={{ 
                     id: currentUser.id,
                     name: currentUser.username, 
                     imageUrl: currentUser.imageUrl || '',
