@@ -6,7 +6,7 @@ export const API_BASE_URL = 'https://app.nocodb.com/'; // e.g., 'https://xano-in
 // IMPORTANT: Set your NocoDB API Token here.
 // You can generate this token in your NocoDB project settings (usually under API Tokens or Project Users).
 // This token should be kept secret and ideally managed via environment variables in production.
-export const NOCODB_API_TOKEN = 'YOUR_NOCODB_API_TOKEN_HERE'; // <--- REPLACE THIS WITH YOUR ACTUAL TOKEN
+export const NOCODB_API_TOKEN = 'ChKvc325bE9gCybhvfd3cmPQ3kcJlEw-Yf3QQFjW'; // <--- REPLACE THIS WITH YOUR ACTUAL TOKEN
 
 // ----------------------------------------------------------------------------------
 // !! CRITICAL !! VERIFY ALL TABLE PATHS BELOW !!
