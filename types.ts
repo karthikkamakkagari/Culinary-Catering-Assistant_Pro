@@ -132,6 +132,7 @@ export interface Customer {
   email?: string; 
   credits?: number; 
   newPassword?: string; 
+  cateringName?: string; // Added for profile form context
 }
 
 export const IngredientUnits: string[] = ['kg', 'gram', 'piece', 'leaves', 'liters', 'ml', 'tsp', 'tbsp', 'cup'];

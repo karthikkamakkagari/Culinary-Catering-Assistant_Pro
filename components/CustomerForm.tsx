@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Customer, Dish, CookingItem, CustomerDishSelection, CustomerCookingItemSelection, Ingredient, UserRole, Language, LocalizedText, LanguageLabels } from '../types'; 
 import { placeholderImage, DEFAULT_IMAGE_SIZE } from '../constants';
 import { PlusIcon, TrashIcon } from './icons'; 
-import { getTranslatedText } from '../localization'; // Updated import path
-import ImageInput from './ImageInput'; // Added
+import { getTranslatedText } from '../localization'; 
+import ImageInput from './ImageInput'; 
 
 
 const FormField: React.FC<{ label: string; children: React.ReactNode; error?: string; id?: string }> = ({ label, children, error, id }) => (
@@ -40,11 +40,12 @@ const CustomerForm: React.FC<{
     currentUserPreferredLanguage 
 }) => {
   const [name, setName] = useState(''); 
-  const [imageUrl, setImageUrl] = useState<string | null>(null); // Changed to string | null
+  const [imageUrl, setImageUrl] = useState<string | null>(null); 
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   
   const [email, setEmail] = useState('');
+  const [cateringName, setCateringName] = useState(''); // Added for profile form
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [currentCredits, setCurrentCredits] = useState<number | undefined>(undefined);
@@ -63,6 +64,7 @@ const CustomerForm: React.FC<{
         setAddress(existingCustomer.address || '');
         if (isProfileForm) {
             setEmail(existingCustomer.email || '');
+            setCateringName(existingCustomer.cateringName || ''); // Load cateringName for profile
             setCurrentCredits(existingCustomer.credits);
         } else {
             setNumberOfPersons(existingCustomer.numberOfPersons || 1);
@@ -76,6 +78,7 @@ const CustomerForm: React.FC<{
         setAddress('');
         if (isProfileForm) {
             setEmail('');
+            setCateringName(''); // Initialize cateringName for profile
             setCurrentCredits(undefined); 
         } else {
             setNumberOfPersons(1);
@@ -90,6 +93,7 @@ const CustomerForm: React.FC<{
   const phoneInputId = isProfileForm ? 'profile-phone' : 'customer-phone';
   const addressInputId = isProfileForm ? 'profile-address' : 'customer-address';
   const emailInputId = 'profile-email';
+  const cateringNameInputId = 'profile-cateringname'; // Added ID
   const newPasswordInputId = 'profile-newpassword';
   const confirmNewPasswordInputId = 'profile-confirmnewpassword';
   const personsInputId = 'customer-persons';
@@ -108,6 +112,7 @@ const CustomerForm: React.FC<{
     if (isProfileForm) {
         if(!email.trim()) newErrors.email = "Email is required.";
         else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = "Invalid email format.";
+        if (!cateringName.trim()) newErrors.cateringName = "Catering name is required."; // Validate cateringName
         if (newPassword && newPassword.length < 6) newErrors.newPassword = "New password must be at least 6 characters.";
         if (newPassword && newPassword !== confirmNewPassword) newErrors.confirmNewPassword = "New passwords do not match.";
     } else { 
@@ -155,15 +160,16 @@ const CustomerForm: React.FC<{
         onSave({
             ...baseData,
             email: email, 
+            cateringName: cateringName, // Pass cateringName
             newPassword: newPassword || undefined, 
-            numberOfPersons: existingCustomer?.numberOfPersons || 1,
+            numberOfPersons: existingCustomer?.numberOfPersons || 1, // Keep existing values for non-profile fields
             selectedDishes: existingCustomer?.selectedDishes || [],
             selectedCookingItems: existingCustomer?.selectedCookingItems || [],
             credits: existingCustomer?.credits, 
         } as Customer);
     } else { 
         let customerUserId = existingCustomer?.userId;
-        if (!customerUserId && !existingCustomer && userRole === UserRole.USER && currentUserId) {
+        if (!customerUserId && !existingCustomer && (userRole === UserRole.USER || userRole === UserRole.ADMIN) && currentUserId) {
             customerUserId = currentUserId;
         }
         onSave({
@@ -180,7 +186,7 @@ const CustomerForm: React.FC<{
   const getDishDetailsString = (dish: Dish): string => {
     return dish.ingredients.map(di => {
         const ing = ingredients.find(i => i.id === di.ingredientId);
-        return ing ? `${getTranslatedText(ing.name, currentUserPreferredLanguage)} (${di.quantity} ${ing.unit})` : 'N/A';
+        return ing ? `${getTranslatedText(ing.name, currentUserPreferredLanguage)} (${di.quantity} ${ing.unit || ''})` : 'N/A';
     }).join(', ') || 'No ingredients';
   };
   
@@ -212,6 +218,9 @@ const CustomerForm: React.FC<{
         <>
           <FormField label="Email" error={errors.email} id={emailInputId}>
             <input id={emailInputId} type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full p-2 border border-slate-300 rounded-md focus:ring-blue-500 focus:border-blue-500" required />
+          </FormField>
+           <FormField label="Catering Name" error={errors.cateringName} id={cateringNameInputId}>
+            <input id={cateringNameInputId} type="text" value={cateringName} onChange={e => setCateringName(e.target.value)} className="w-full p-2 border border-slate-300 rounded-md focus:ring-blue-500 focus:border-blue-500" required />
           </FormField>
           <FormField label="New Password (leave blank to keep current)" error={errors.newPassword} id={newPasswordInputId}>
             <input id={newPasswordInputId} type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Min. 6 characters" className="w-full p-2 border border-slate-300 rounded-md focus:ring-blue-500 focus:border-blue-500" />
