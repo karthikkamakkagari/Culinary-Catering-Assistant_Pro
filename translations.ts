@@ -44,6 +44,27 @@ export const uiTranslations: { [key in UITranslationKeys]: LocalizedText } = {
     [Language.KN]: 'ಚಿತ್ರ',
     [Language.HI]: 'छवि'
   },
+  [UITranslationKeys.PRICE_LABEL]: {
+    [Language.EN]: 'Price (₹)',
+    [Language.TE]: 'ధర (₹)',
+    [Language.TA]: 'விலை (₹)',
+    [Language.KN]: 'ಬೆಲೆ (₹)',
+    [Language.HI]: 'मूल्य (₹)'
+  },
+  [UITranslationKeys.COST_LABEL]: {
+    [Language.EN]: 'Cost: ₹{cost}',
+    [Language.TE]: 'ఖర్చు: ₹{cost}',
+    [Language.TA]: 'செலவு: ₹{cost}',
+    [Language.KN]: 'ವೆಚ್ಚ: ₹{cost}',
+    [Language.HI]: 'लागत: ₹{cost}'
+  },
+  [UITranslationKeys.TOTAL_COST_LABEL]: {
+    [Language.EN]: 'Total Cost: ₹{totalCost}',
+    [Language.TE]: 'మొత్తం ఖర్చు: ₹{totalCost}',
+    [Language.TA]: 'மொத்த செலவு: ₹{totalCost}',
+    [Language.KN]: 'ಒಟ್ಟು ವೆಚ್ಚ: ₹{totalCost}',
+    [Language.HI]: 'कुल लागत: ₹{totalCost}'
+  },
   // Ingredients
   [UITranslationKeys.INGREDIENTS_PAGE_TITLE]: { 
     [Language.EN]: 'Ingredients', 
@@ -86,6 +107,13 @@ export const uiTranslations: { [key in UITranslationKeys]: LocalizedText } = {
     [Language.TA]: 'அலகு',
     [Language.KN]: 'ಘಟಕ',
     [Language.HI]: 'इकाई'
+  },
+  [UITranslationKeys.INGREDIENT_PRICE_FOR_QTY_UNIT_LABEL]: {
+    [Language.EN]: 'Price (₹) for this Quantity & Unit',
+    [Language.TE]: 'ఈ పరిమాణం & యూనిట్‌కు ధర (₹)',
+    [Language.TA]: 'இந்த அளவு மற்றும் அலகுக்கான விலை (₹)',
+    [Language.KN]: 'ಈ ಪ್ರಮಾಣ ಮತ್ತು ಘಟಕಕ್ಕೆ ಬೆಲೆ (₹)',
+    [Language.HI]: 'इस मात्रा और इकाई के लिए मूल्य (₹)'
   },
   // Dishes
   [UITranslationKeys.DISHES_PAGE_TITLE]: {
@@ -137,6 +165,13 @@ export const uiTranslations: { [key in UITranslationKeys]: LocalizedText } = {
     [Language.KN]: 'ಯಾವುದೇ ಪದಾರ್ಥಗಳು ಲಭ್ಯವಿಲ್ಲ. ದಯವಿಟ್ಟು ಮೊದಲು ಕೆಲವನ್ನು ಸೇರಿಸಿ.',
     [Language.HI]: 'कोई सामग्री उपलब्ध नहीं है। कृपया पहले कुछ जोड़ें।'
   },
+  [UITranslationKeys.DISH_COST_LABEL]: {
+    [Language.EN]: 'Est. Dish Cost: ₹{cost}',
+    [Language.TE]: 'అంచనా వంటకం ఖర్చు: ₹{cost}',
+    [Language.TA]: 'மதிப்பிடப்பட்ட உணவு செலவு: ₹{cost}',
+    [Language.KN]: 'ಅಂದಾಜು ಭಕ್ಷ್ಯ ವೆಚ್ಚ: ₹{cost}',
+    [Language.HI]: 'अनुमानित व्यंजन लागत: ₹{cost}'
+  },
   // Cooking Items
   [UITranslationKeys.COOKING_ITEMS_PAGE_TITLE]: {
     [Language.EN]: 'Cooking Items',
@@ -173,6 +208,14 @@ export const uiTranslations: { [key in UITranslationKeys]: LocalizedText } = {
     [Language.KN]: 'ಸಾರಾಂಶ',
     [Language.HI]: 'सारांश'
   },
+  [UITranslationKeys.COOKING_ITEM_PRICE_PER_UNIT_LABEL]: {
+    [Language.EN]: 'Price (₹) per Unit',
+    [Language.TE]: 'యూనిట్‌కు ధర (₹)',
+    [Language.TA]: 'ஒரு அலகுக்கான விலை (₹)',
+    [Language.KN]: 'ಪ್ರತಿ ಘಟಕಕ್ಕೆ ಬೆಲೆ (₹)',
+    [Language.HI]: 'प्रति इकाई मूल्य (₹)'
+  },
+
   // PDF Labels
   [UITranslationKeys.PDF_ORDER_SUMMARY_TITLE]: { en: 'Order Summary', te: 'ఆర్డర్ సారాంశం', ta: 'ஆர்டர் சுருக்கம்', kn: 'ಆರ್ಡರ್ ಸಾರಾಂಶ', hi: 'आदेश सारांश' },
   [UITranslationKeys.PDF_GENERATED_ON_LABEL]: { en: 'Generated:', te: 'న ఉత్పత్తి చేయబడింది:', ta: 'உருவாக்கப்பட்டது:', kn: 'ರಚಿಸಲಾಗಿದೆ:', hi: 'उत्पन्न:' },
@@ -186,12 +229,16 @@ export const uiTranslations: { [key in UITranslationKeys]: LocalizedText } = {
   [UITranslationKeys.PDF_INGREDIENTS_TABLE_HEADER_NAME]: { en: 'Ingredient', te: 'పదార్ధం', ta: 'பொருள்', kn: 'ಪದಾರ್ಥ', hi: 'सामग्री' },
   [UITranslationKeys.PDF_INGREDIENTS_TABLE_HEADER_QUANTITY]: { en: 'Quantity', te: 'పరిమాణం', ta: 'அளவு', kn: 'ಪ್ರಮಾಣ', hi: 'मात्रा' },
   [UITranslationKeys.PDF_INGREDIENTS_TABLE_HEADER_UNIT]: { en: 'Unit', te: 'యూనిట్', ta: 'அலகு', kn: 'ಘಟಕ', hi: 'इकाई' },
+  [UITranslationKeys.PDF_INGREDIENTS_TABLE_HEADER_PRICE]: { en: 'Total Price (₹)', te: 'మొత్తం ధర (₹)', ta: 'மொத்த விலை (₹)', kn: 'ಒಟ್ಟು ಬೆಲೆ (₹)', hi: 'कुल मूल्य (₹)' },
   [UITranslationKeys.PDF_NO_INGREDIENTS_CALCULATED]: { en: '(No ingredients calculated)', te: '(పదార్థాలు ఏవీ లెక్కించబడలేదు)', ta: '(பொருட்கள் எதுவும் கணக்கிடப்படவில்லை)', kn: '(ಯಾವುದೇ ಪದಾರ್ಥಗಳನ್ನು ಲೆಕ್ಕ ಹಾಕಲಾಗಿಲ್ಲ)', hi: '(कोई सामग्री गणना नहीं की गई)' },
   [UITranslationKeys.PDF_SELECTED_COOKING_ITEMS_TITLE]: { en: 'Selected Cooking Items', te: 'ఎంచుకున్న వంట సామాగ్రి', ta: 'தேர்ந்தெடுக்கப்பட்ட சமையல் பொருட்கள்', kn: 'ಆಯ್ದ ಅಡುಗೆ ಸಾಮಗ್ರಿಗಳು', hi: 'चयनित खाना पकाने की सामग्री' },
   [UITranslationKeys.PDF_COOKING_ITEMS_TABLE_HEADER_NAME]: { en: 'Item', te: 'వస్తువు', ta: 'பொருள்', kn: 'ವಸ್ತು', hi: 'वस्तु' },
   [UITranslationKeys.PDF_COOKING_ITEMS_TABLE_HEADER_QUANTITY]: { en: 'Quantity', te: 'పరిమాణం', ta: 'அளவு', kn: 'ಪ್ರಮಾಣ', hi: 'मात्रा' },
   [UITranslationKeys.PDF_COOKING_ITEMS_TABLE_HEADER_UNIT]: { en: 'Unit', te: 'యూనిట్', ta: 'அலகு', kn: 'ಘಟಕ', hi: 'इकाई' },
+  [UITranslationKeys.PDF_COOKING_ITEMS_TABLE_HEADER_PRICE_PER_UNIT]: { en: 'Price/Unit (₹)', te: 'ధర/యూనిట్ (₹)', ta: 'விலை/அலகு (₹)', kn: 'ಬೆಲೆ/ಘಟಕ (₹)', hi: 'मूल्य/इकाई (₹)' },
+  [UITranslationKeys.PDF_COOKING_ITEMS_TABLE_HEADER_TOTAL_PRICE]: { en: 'Total Price (₹)', te: 'మొత్తం ధర (₹)', ta: 'மொத்த விலை (₹)', kn: 'ಒಟ್ಟು ಬೆಲೆ (₹)', hi: 'कुल मूल्य (₹)' },
   [UITranslationKeys.PDF_NO_COOKING_ITEMS_SELECTED]: { en: '(No cooking items selected)', te: '(వంట సామాగ్రి ఏవీ ఎంచుకోబడలేదు)', ta: '(சமையல் பொருட்கள் எதுவும் தேர்ந்தெடுக்கப்படவில்லை)', kn: '(ಯಾವುದೇ ಅಡುಗೆ ಸಾಮಾನುಗಳನ್ನು ಆಯ್ಕೆ ಮಾಡಲಾಗಿಲ್ಲ)', hi: '(कोई खाना पकाने की सामग्री चयनित नहीं)' },
+  [UITranslationKeys.PDF_TOTAL_ORDER_COST_LABEL]: { en: 'Total Order Cost: ₹{totalCost}', te: 'మొత్తం ఆర్డర్ ఖర్చు: ₹{totalCost}', ta: 'மொத்த ஆர்டர் செலவு: ₹{totalCost}', kn: 'ಒಟ್ಟು ಆರ್ಡರ್ ವೆಚ್ಚ: ₹{totalCost}', hi: 'कुल आदेश लागत: ₹{totalCost}' },
   [UITranslationKeys.PDF_THANK_YOU_MESSAGE]: { en: 'Thank you for your order!', te: 'మీ ఆర్డర్‌కు ధన్యవాదాలు!', ta: 'உங்கள் ஆர்டருக்கு நன்றி!', kn: 'ನಿಮ್ಮ ಆರ್ಡರ್‌ಗಾಗಿ ಧನ್ಯವಾದಗಳು!', hi: 'आपके आदेश के लिए धन्यवाद!' },
   [UITranslationKeys.PDF_PREPARED_BY_LABEL]: { en: 'Prepared By:', te: 'తయారుచేసిన వారు:', ta: 'தயாரித்தவர்:', kn: 'ತಯಾರಿಸಿದವರು:', hi: 'द्वारा तैयार:' },
   [UITranslationKeys.PDF_USER_PHONE_LABEL]: { en: 'Contact:', te: 'సంప్రదించండి:', ta: 'தொடர்புக்கு:', kn: 'ಸಂಪರ್ಕಿಸಿ:', hi: 'संपर्क करें:' },
@@ -216,6 +263,11 @@ export const uiTranslations: { [key in UITranslationKeys]: LocalizedText } = {
   [UITranslationKeys.EXCEL_DISH_IMPORT_INVALID_INGREDIENT_ID]: { en: 'Invalid ingredient ID "{ingredientId}" found in ingredients JSON for dish "{dishName}".', te: '"{dishName}" వంటకం కోసం పదార్థాల JSONలో చెల్లని పదార్థం ID "{ingredientId}" కనుగొనబడింది.', ta: '"{dishName}" உணவுக்கான பொருட்கள் JSON இல் தவறான பொருள் ஐடி "{ingredientId}" கண்டறியப்பட்டது.', kn: '"{dishName}" ಭಕ್ಷ್ಯಕ್ಕಾಗಿ ಪದಾರ್ಥಗಳ JSON ನಲ್ಲಿ ಅಮಾನ್ಯ ಪದಾರ್ಥ ID "{ingredientId}" ಕಂಡುಬಂದಿದೆ.', hi: '"{dishName}" व्यंजन के लिए सामग्री JSON में अमान्य सामग्री आईडी "{ingredientId}" मिली।' },
   [UITranslationKeys.EXCEL_DISH_IMPORT_INVALID_INGREDIENT_QUANTITY]: { en: 'Invalid quantity for ingredient ID "{ingredientId}" in dish "{dishName}".', te: '"{dishName}" వంటకంలో పదార్థం ID "{ingredientId}" కోసం చెల్లని పరిమాణం.', ta: '"{dishName}" உணவில் "{ingredientId}" பொருள் ஐடிக்கான தவறான அளவு.', kn: '"{dishName}" ಭಕ್ಷ್ಯದಲ್ಲಿ ಪದಾರ್ಥ ID "{ingredientId}" ಗಾಗಿ ಅಮಾನ್ಯ ಪ್ರಮಾಣ.', hi: '"{dishName}" व्यंजन में सामग्री आईडी "{ingredientId}" के लिए अमान्य मात्रा।' },
   [UITranslationKeys.EXCEL_DISH_IMPORT_INVALID_INGREDIENTS_JSON]: { en: 'Invalid ingredients JSON string for dish "{dishName}". Error: {error}', te: '"{dishName}" వంటకం కోసం చెల్లని పదార్థాల JSON స్ట్రింగ్. లోపం: {error}', ta: '"{dishName}" உணவுக்கான தவறான பொருட்கள் JSON சரம். பிழை: {error}', kn: '"{dishName}" ಭಕ್ಷ್ಯಕ್ಕಾಗಿ ಅಮಾನ್ಯ ಪದಾರ್ಥಗಳ JSON ಸ್ಟ್ರಿಂಗ್. ದೋಷ: {error}', hi: '"{dishName}" व्यंजन के लिए अमान्य सामग्री JSON स्ट्रिंग। त्रुटि: {error}' },
+  [UITranslationKeys.EXCEL_EXPORT_COOKING_ITEMS_BUTTON]: { en: 'Export Cooking Items', te: 'వంట సామాగ్రిని Excel ఎగుమతి చేయండి', ta: 'சமையல் பொருட்களை Excel ஏற்றுமதி செய்', kn: 'ಅಡುಗೆ ಸಾಮಾನುಗಳನ್ನು Excel ರಫ್ತು ಮಾಡಿ', hi: 'खाना पकाने की सामग्री एक्सेल निर्यात करें' },
+  [UITranslationKeys.EXCEL_IMPORT_COOKING_ITEMS_BUTTON]: { en: 'Import Cooking Items', te: 'వంట సామాగ్రిని Excel దిగుమతి చేయండి', ta: 'சமையல் பொருட்களை Excel இறக்குமதி செய்', kn: 'ಅಡುಗೆ ಸಾಮಾನುಗಳನ್ನು Excel ಆಮದು ಮಾಡಿ', hi: 'खाना पकाने की सामग्री एक्सेल आयात करें' },
+  [UITranslationKeys.ALERT_COOKING_ITEMS_EXPORTED_SUCCESS]: { en: 'Cooking items exported successfully to Excel!', te: 'వంట సామాగ్రి Excelకి విజయవంతంగా ఎగుమతి చేయబడ్డాయి!', ta: 'சமையல் பொருட்கள் Excelக்கு வெற்றிகரமாக ஏற்றுமதி செய்யப்பட்டன!', kn: 'ಅಡುಗೆ ಸಾಮಾನುಗಳನ್ನು Excel ಗೆ ಯಶಸ್ವಿಯಾಗಿ ರಫ್ತು ಮಾಡಲಾಗಿದೆ!', hi: 'खाना पकाने की सामग्री सफलतापूर्वक एक्सेल में निर्यात की गई!' },
+  [UITranslationKeys.ALERT_COOKING_ITEMS_IMPORTED_SUCCESS]: { en: 'Cooking items imported/updated successfully from Excel!', te: 'Excel నుండి వంట సామాగ్రి విజయవంతంగా దిగుమతి/నవీకరించబడ్డాయి!', ta: 'Excel இலிருந்து சமையல் பொருட்கள் வெற்றிகரமாக இறக்குமதி/புதுப்பிக்கப்பட்டன!', kn: 'Excel ನಿಂದ ಅಡುಗೆ ಸಾಮಾನುಗಳನ್ನು ಯಶಸ್ವಿಯಾಗಿ ಆಮದು/ನವೀಕರಿಸಲಾಗಿದೆ!', hi: 'एक्सेल से खाना पकाने की सामग्री सफलतापूर्वक आयात/अद्यतन की गई!' },
+
 
   // General Alerts
   [UITranslationKeys.ALERT_PERMISSION_DENIED]: { en: 'Permission Denied.', te: 'అనుమతి నిరాకరించబడింది.', ta: 'அனுமதி மறுக்கப்பட்டது.', kn: 'ಅನುಮತಿ ನಿರಾಕರಿಸಲಾಗಿದೆ.', hi: 'अनुमति अस्वीकृत।' },
@@ -239,6 +291,20 @@ export const uiTranslations: { [key in UITranslationKeys]: LocalizedText } = {
   // Customer Order Actions
   [UITranslationKeys.HTML_VIEW_ORDER_BUTTON]: { en: 'View HTML', te: 'HTML చూడండి', ta: 'HTML காண்க', kn: 'HTML ವೀಕ್ಷಿಸಿ', hi: 'एचटीएमएल देखें' },
   [UITranslationKeys.PRINT_ORDER_BUTTON]: { en: 'Print Order', te: 'ఆర్డర్‌ను ముద్రించండి', ta: 'ஆர்டரை அச்சிடு', kn: 'ಆರ್ಡರ್ ಮುದ್ರಿಸಿ', hi: 'आदेश प्रिंट करें' },
+  [UITranslationKeys.ORDER_TOTAL_COST_LABEL]: {
+    [Language.EN]: 'Total Order Cost: ₹{cost}',
+    [Language.TE]: 'మొత్తం ఆర్డర్ ఖర్చు: ₹{cost}',
+    [Language.TA]: 'மொத்த ஆர்டர் செலவு: ₹{cost}',
+    [Language.KN]: 'ಒಟ್ಟು ಆರ್ಡರ್ ವೆಚ್ಚ: ₹{cost}',
+    [Language.HI]: 'कुल ऑर्डर लागत: ₹{cost}'
+  },
+  [UITranslationKeys.SHARE_ORDER_WHATSAPP_BUTTON]: { 
+    en: 'Share to WhatsApp', 
+    te: 'WhatsApp లో షేర్ చేయండి', 
+    ta: 'WhatsApp இல் பகிரவும்', 
+    kn: 'WhatsApp ಗೆ ಹಂಚಿಕೊಳ್ಳಿ', 
+    hi: 'व्हाट्सएप पर साझा करें' 
+  },
 
   // Order Ingredient Editing
   [UITranslationKeys.EDIT_ORDER_INGREDIENT_TITLE]: { en: 'Edit Order Ingredient', te: 'ఆర్డర్ పదార్థాన్ని సవరించండి', ta: 'ஆர்டர் பொருளைத் திருத்து', kn: 'ಆರ್ಡರ್ ಪದಾರ್ಥವನ್ನು ಸಂಪಾದಿಸಿ', hi: 'ऑर्डर सामग्री संपादित करें' },
@@ -247,9 +313,17 @@ export const uiTranslations: { [key in UITranslationKeys]: LocalizedText } = {
   [UITranslationKeys.ORDER_INGREDIENT_NAME_LABEL]: { en: 'Ingredient Name', te: 'పదార్థం పేరు', ta: 'பொருள் பெயர்', kn: 'ಪದಾರ್ಥದ ಹೆಸರು', hi: 'सामग्री का नाम' },
   [UITranslationKeys.MASTER_INGREDIENT_LABEL]: { en: 'Master Ingredient', te: 'ప్రధాన పదార్థం', ta: 'முதன்மை பொருள்', kn: 'ಮುಖ್ಯ ಪದಾರ್ಥ', hi: 'मुख्य सामग्री' },
   [UITranslationKeys.SELECT_INGREDIENT_PLACEHOLDER]: { en: 'Select an ingredient...', te: 'ఒక పదార్థాన్ని ఎంచుకోండి...', ta: 'ஒரு பொருளைத் தேர்ந்தெடுக்கவும்...', kn: 'ಒಂದು ಪದಾರ್ಥವನ್ನು ಆಯ್ಕೆಮಾಡಿ...', hi: 'एक सामग्री चुनें...' },
+
+  // Order Cooking Item Editing
+  [UITranslationKeys.EDIT_ORDER_COOKING_ITEM_TITLE]: { en: 'Edit Order Cooking Item', te: 'ఆర్డర్ వంట సామాగ్రిని సవరించండి', ta: 'ஆர்டர் சமையல் பொருளைத் திருத்து', kn: 'ಆರ್ಡರ್ ಅಡುಗೆ ಸಾಮಾನು ಸಂಪಾದಿಸಿ', hi: 'ऑर्डर कुकिंग आइटम संपादित करें' },
+  [UITranslationKeys.ADD_ORDER_COOKING_ITEM_TITLE]: { en: 'Add Cooking Item to Order', te: 'ఆర్డర్‌కు వంట సామాగ్రిని జోడించండి', ta: 'ஆர்டரில் சமையல் பொருளைச் சேர்', kn: 'ಆರ್ಡರ್‌ಗೆ ಅಡುಗೆ ಸಾಮಾನು ಸೇರಿಸಿ', hi: 'ऑर्डर में कुकिंग आइटम जोड़ें' },
+  [UITranslationKeys.ADD_COOKING_ITEM_TO_ORDER_BUTTON]: { en: 'Add Cooking Item to Order', te: 'ఆర్డర్‌కు వంట సామాగ్రిని జోడించు', ta: 'ஆர்டரில் சமையல் பொருளைச் சேர்', kn: 'ಆರ್ಡರ್‌ಗೆ ಅಡುಗೆ ಸಾಮಾನು ಸೇರಿಸಿ', hi: 'ऑर्डर में कुकिंग आइटम जोड़ें' },
+  [UITranslationKeys.ORDER_COOKING_ITEM_NAME_LABEL]: { en: 'Cooking Item Name', te: 'వంట సామాగ్రి పేరు', ta: 'சமையல் பொருள் பெயர்', kn: 'ಅಡುಗೆ ಸಾಮಾನು ಹೆಸರು', hi: 'कुकिंग आइटम का नाम' },
+  [UITranslationKeys.MASTER_COOKING_ITEM_LABEL]: { en: 'Master Cooking Item', te: 'ప్రధాన వంట సామాగ్రి', ta: 'முதன்மை சமையல் பொருள்', kn: 'ಮುಖ್ಯ ಅಡುಗೆ ಸಾಮಾನು', hi: 'मुख्य कुकिंग आइटम' },
+  [UITranslationKeys.SELECT_COOKING_ITEM_PLACEHOLDER]: { en: 'Select a cooking item...', te: 'ఒక వంట సామాగ్రిని ఎంచుకోండి...', ta: 'ஒரு சமையல் பொருளைத் தேர்ந்தெடுக்கவும்...', kn: 'ಒಂದು ಅಡುಗೆ ಸಾಮಾನು ಆಯ್ಕೆಮಾಡಿ...', hi: 'एक कुकिंग आइटम चुनें...' },
 };
 
-export const getUIText = (key: UITranslationKeys, preferredLang: Language, fallbackLang: Language = Language.EN, replacements?: {[key:string]: string}): string => {
+export const getUIText = (key: UITranslationKeys, preferredLang: Language, fallbackLang: Language = Language.EN, replacements?: {[key:string]: string|number}): string => {
   const translationsForKey = uiTranslations[key];
   if (!translationsForKey) {
     // console.warn(`No UI translations found for key: ${key}`);
@@ -274,7 +348,7 @@ export const getUIText = (key: UITranslationKeys, preferredLang: Language, fallb
 
   if (replacements) {
     Object.keys(replacements).forEach(placeholder => {
-      translatedString = translatedString!.replace(`{${placeholder}}`, replacements[placeholder]);
+      translatedString = translatedString!.replace(`{${placeholder}}`, String(replacements[placeholder]));
     });
   }
   return translatedString!;

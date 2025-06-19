@@ -2,12 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { CookingItem, CookingItemUnits, Language, LocalizedText, LanguageLabels, UITranslationKeys } from '../types'; 
 import { placeholderImage, DEFAULT_IMAGE_SIZE } from '../constants'; 
-import { getTranslatedText } from '../localization'; // Updated import path
-import ImageInput from './ImageInput'; // Added
-import { getUIText } from '../translations'; // Added for UI localization
+import { getTranslatedText } from '../localization'; 
+import ImageInput from './ImageInput'; 
+import { getUIText } from '../translations'; 
 
 interface CookingItemFormProps {
-    onSave: (data: { name: string, imageUrl: string | null, summary: string, unit: string, id?:string }) => void; // imageUrl can be null
+    onSave: (data: { name: string, imageUrl: string | null, summary: string, unit: string, price: number, id?:string }) => void;
     onCancel: () => void;
     existingCookingItem?: CookingItem | null;
     units: string[];
@@ -21,6 +21,7 @@ const CookingItemForm: React.FC<CookingItemFormProps> =
     const [imageUrl, setImageUrl] = useState<string | null>(existingCookingItem?.imageUrl || null);
     const [summary, setSummary] = useState('');
     const [unit, setUnit] = useState(existingCookingItem?.unit || units[0]);
+    const [price, setPrice] = useState(existingCookingItem?.price || 0);
     const [error, setError] = useState('');
 
     useEffect(() => {
@@ -29,19 +30,21 @@ const CookingItemForm: React.FC<CookingItemFormProps> =
             setImageUrl(existingCookingItem.imageUrl || null);
             setSummary(getTranslatedText(existingCookingItem.summary, currentUserPreferredLanguage, Language.EN));
             setUnit(existingCookingItem.unit || units[0]);
+            setPrice(existingCookingItem.price || 0);
         } else {
             setName('');
             setImageUrl(null);
             setSummary('');
             setUnit(units[0]);
+            setPrice(0);
         }
     }, [existingCookingItem, currentUserPreferredLanguage, units]);
 
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!name.trim() || !summary.trim()) {
-            setError('Name and summary are required.'); // This error message could also be localized
+        if (!name.trim() || !summary.trim() || price < 0) {
+            setError('Name, summary, and non-negative price are required.');
             return;
         }
         setError('');
@@ -50,7 +53,8 @@ const CookingItemForm: React.FC<CookingItemFormProps> =
             name, 
             imageUrl, 
             summary, 
-            unit 
+            unit,
+            price
         });
     };
 
@@ -61,6 +65,7 @@ const CookingItemForm: React.FC<CookingItemFormProps> =
     const imageLabel = getUIText(UITranslationKeys.IMAGE_LABEL, currentUserPreferredLanguage);
     const summaryLabel = `${getUIText(UITranslationKeys.SUMMARY_LABEL, currentUserPreferredLanguage)} (in ${LanguageLabels[currentUserPreferredLanguage]})`;
     const unitLabel = getUIText(UITranslationKeys.UNIT_LABEL, currentUserPreferredLanguage);
+    const priceLabel = getUIText(UITranslationKeys.COOKING_ITEM_PRICE_PER_UNIT_LABEL, currentUserPreferredLanguage);
     const cancelText = getUIText(UITranslationKeys.CANCEL, currentUserPreferredLanguage);
     const saveButtonText = existingCookingItem 
         ? getUIText(UITranslationKeys.SAVE_CHANGES, currentUserPreferredLanguage) 
@@ -92,6 +97,10 @@ const CookingItemForm: React.FC<CookingItemFormProps> =
             <select id="citem-unit" value={unit} onChange={e => setUnit(e.target.value)} className="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
             {units.map(u => <option key={u} value={u}>{u}</option>)}
             </select>
+        </div>
+         <div>
+            <label htmlFor="citem-price" className="block text-sm font-medium text-slate-700">{priceLabel}</label>
+            <input id="citem-price" type="number" value={price} onChange={e => setPrice(parseFloat(e.target.value))} min="0" step="0.001" className="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" required />
         </div>
         <div className="flex justify-end space-x-3 pt-4">
             <button type="button" onClick={onCancel} className="px-4 py-2 text-slate-700 bg-slate-200 hover:bg-slate-300 rounded-md transition-colors">{cancelText}</button>

@@ -124,8 +124,8 @@ const OrderIngredientForm: React.FC<OrderIngredientFormProps> = ({
                     type="number"
                     value={quantity}
                     onChange={(e) => setQuantity(parseFloat(e.target.value))}
-                    min="0.01"
-                    step="0.01"
+                    min="0.001"
+                    step="0.001"
                     className="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                     required
                 />

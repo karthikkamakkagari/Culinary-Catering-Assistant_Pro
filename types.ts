@@ -55,10 +55,11 @@ export interface AuthUser {
 
 export interface Ingredient {
   id: string;
-  name: LocalizedText; // Changed
+  name: LocalizedText;
   imageUrl: string;
   quantity: number; 
   unit: string;
+  price: number; // Added: Price in Rupees for the specified quantity and unit
 }
 
 export interface DishIngredient {
@@ -68,18 +69,19 @@ export interface DishIngredient {
 
 export interface Dish {
   id: string;
-  name: LocalizedText; // Changed
+  name: LocalizedText;
   imageUrl: string;
   ingredients: DishIngredient[];
-  preparationSteps: LocalizedText; // Added
+  preparationSteps: LocalizedText;
 }
 
 export interface CookingItem {
   id: string;
-  name: LocalizedText; // Changed
+  name: LocalizedText;
   imageUrl: string;
-  summary: LocalizedText; // Changed
+  summary: LocalizedText;
   unit: string;
+  price: number; // Added: Price in Rupees per unit
 }
 
 export interface CustomerDishSelection {
@@ -92,21 +94,33 @@ export interface CustomerCookingItemSelection {
 }
 
 export interface CumulativeIngredient {
-  id: string; // Unique ID for this entry *within this specific order*.
-  masterIngredientId: string; // ID of the master ingredient from the main 'ingredients' list.
-  name: string; // The translated name of the ingredient for this order.
+  id: string; 
+  masterIngredientId: string; 
+  name: string; 
   totalQuantity: number;
   unit: string;
+  totalPrice: number; // Added: Total cost for this cumulative ingredient
+}
+
+export interface SelectedCookingItemDetail {
+    id: string; 
+    masterCookingItemId: string; // Added: Link to the master CookingItem
+    name: string;
+    quantity: number;
+    unit: string;
+    price: number; // Price per unit
+    totalPrice: number; // Total cost for this selection (quantity * price)
 }
 
 export interface GeneratedOrder {
   cumulativeIngredients: CumulativeIngredient[];
-  selectedCookingItems: Array<{ name: string; quantity: number; unit: string }>; // This will be translated
+  selectedCookingItems: SelectedCookingItemDetail[]; 
+  totalOrderCost: number; // Added: Overall cost of the order
 }
 
 export interface Customer {
   id:string;
-  name: string; // Customer name is user input, not typically localized in this context
+  name: string; 
   imageUrl: string;
   phone: string;
   address: string;
@@ -123,7 +137,7 @@ export interface Customer {
 export const IngredientUnits: string[] = ['kg', 'gram', 'piece', 'leaves', 'liters', 'ml', 'tsp', 'tbsp', 'cup'];
 export const CookingItemUnits: string[] = ['kg', 'gram', 'piece', 'Big one', 'Small one', 'Medium one', 'pack', 'bottle'];
 
-export type ModalType = 'ingredient' | 'dish' | 'cookingItem' | 'customer' | 'profile' | 'orderIngredient' | null;
+export type ModalType = 'ingredient' | 'dish' | 'cookingItem' | 'customer' | 'profile' | 'orderIngredient' | 'orderCookingItem' | null;
 
 // Enum for UI Translation Keys
 export enum UITranslationKeys {
@@ -134,6 +148,9 @@ export enum UITranslationKeys {
   SEARCH_PLACEHOLDER = 'SEARCH_PLACEHOLDER',
   NAME_LABEL = 'NAME_LABEL',
   IMAGE_LABEL = 'IMAGE_LABEL',
+  PRICE_LABEL = 'PRICE_LABEL', 
+  COST_LABEL = 'COST_LABEL', 
+  TOTAL_COST_LABEL = 'TOTAL_COST_LABEL', 
   // Ingredients
   INGREDIENTS_PAGE_TITLE = 'INGREDIENTS_PAGE_TITLE',
   ADD_INGREDIENT_TITLE = 'ADD_INGREDIENT_TITLE',
@@ -141,22 +158,25 @@ export enum UITranslationKeys {
   INGREDIENT_NAME_LABEL = 'INGREDIENT_NAME_LABEL',
   QUANTITY_LABEL = 'QUANTITY_LABEL',
   UNIT_LABEL = 'UNIT_LABEL',
+  INGREDIENT_PRICE_FOR_QTY_UNIT_LABEL = 'INGREDIENT_PRICE_FOR_QTY_UNIT_LABEL', 
   // Dishes
-  DISHES_PAGE_TITLE = 'DISHES_PAGE_TITLE', // Added
-  ADD_DISH_TITLE = 'ADD_DISH_TITLE', // Added
-  EDIT_DISH_TITLE = 'EDIT_DISH_TITLE', // Added
-  DISH_NAME_LABEL = 'DISH_NAME_LABEL', // Added
-  PREPARATION_STEPS_LABEL = 'PREPARATION_STEPS_LABEL', // Added
-  SELECT_INGREDIENTS_LABEL = 'SELECT_INGREDIENTS_LABEL', // Added
-  NO_INGREDIENTS_AVAILABLE = 'NO_INGREDIENTS_AVAILABLE', // Added
+  DISHES_PAGE_TITLE = 'DISHES_PAGE_TITLE', 
+  ADD_DISH_TITLE = 'ADD_DISH_TITLE', 
+  EDIT_DISH_TITLE = 'EDIT_DISH_TITLE', 
+  DISH_NAME_LABEL = 'DISH_NAME_LABEL', 
+  PREPARATION_STEPS_LABEL = 'PREPARATION_STEPS_LABEL', 
+  SELECT_INGREDIENTS_LABEL = 'SELECT_INGREDIENTS_LABEL', 
+  NO_INGREDIENTS_AVAILABLE = 'NO_INGREDIENTS_AVAILABLE', 
+  DISH_COST_LABEL = 'DISH_COST_LABEL', 
   // Cooking Items
   COOKING_ITEMS_PAGE_TITLE = 'COOKING_ITEMS_PAGE_TITLE',
   ADD_COOKING_ITEM_TITLE = 'ADD_COOKING_ITEM_TITLE',
   EDIT_COOKING_ITEM_TITLE = 'EDIT_COOKING_ITEM_TITLE',
   COOKING_ITEM_NAME_LABEL = 'COOKING_ITEM_NAME_LABEL',
   SUMMARY_LABEL = 'SUMMARY_LABEL',
+  COOKING_ITEM_PRICE_PER_UNIT_LABEL = 'COOKING_ITEM_PRICE_PER_UNIT_LABEL', 
 
-  // PDF Labels (retained for PDF generation)
+  // PDF Labels
   PDF_ORDER_SUMMARY_TITLE = 'PDF_ORDER_SUMMARY_TITLE',
   PDF_GENERATED_ON_LABEL = 'PDF_GENERATED_ON_LABEL',
   PDF_CUSTOMER_LABEL = 'PDF_CUSTOMER_LABEL',
@@ -169,12 +189,16 @@ export enum UITranslationKeys {
   PDF_INGREDIENTS_TABLE_HEADER_NAME = 'PDF_INGREDIENTS_TABLE_HEADER_NAME',
   PDF_INGREDIENTS_TABLE_HEADER_QUANTITY = 'PDF_INGREDIENTS_TABLE_HEADER_QUANTITY',
   PDF_INGREDIENTS_TABLE_HEADER_UNIT = 'PDF_INGREDIENTS_TABLE_HEADER_UNIT',
+  PDF_INGREDIENTS_TABLE_HEADER_PRICE = 'PDF_INGREDIENTS_TABLE_HEADER_PRICE', 
   PDF_NO_INGREDIENTS_CALCULATED = 'PDF_NO_INGREDIENTS_CALCULATED',
   PDF_SELECTED_COOKING_ITEMS_TITLE = 'PDF_SELECTED_COOKING_ITEMS_TITLE',
   PDF_COOKING_ITEMS_TABLE_HEADER_NAME = 'PDF_COOKING_ITEMS_TABLE_HEADER_NAME',
   PDF_COOKING_ITEMS_TABLE_HEADER_QUANTITY = 'PDF_COOKING_ITEMS_TABLE_HEADER_QUANTITY',
   PDF_COOKING_ITEMS_TABLE_HEADER_UNIT = 'PDF_COOKING_ITEMS_TABLE_HEADER_UNIT',
+  PDF_COOKING_ITEMS_TABLE_HEADER_PRICE_PER_UNIT = 'PDF_COOKING_ITEMS_TABLE_HEADER_PRICE_PER_UNIT', 
+  PDF_COOKING_ITEMS_TABLE_HEADER_TOTAL_PRICE = 'PDF_COOKING_ITEMS_TABLE_HEADER_TOTAL_PRICE', 
   PDF_NO_COOKING_ITEMS_SELECTED = 'PDF_NO_COOKING_ITEMS_SELECTED',
+  PDF_TOTAL_ORDER_COST_LABEL = 'PDF_TOTAL_ORDER_COST_LABEL', 
   PDF_THANK_YOU_MESSAGE = 'PDF_THANK_YOU_MESSAGE',
   PDF_PREPARED_BY_LABEL = 'PDF_PREPARED_BY_LABEL',
   PDF_USER_PHONE_LABEL = 'PDF_USER_PHONE_LABEL',
@@ -199,17 +223,24 @@ export enum UITranslationKeys {
   EXCEL_DISH_IMPORT_INVALID_INGREDIENT_ID = 'EXCEL_DISH_IMPORT_INVALID_INGREDIENT_ID', 
   EXCEL_DISH_IMPORT_INVALID_INGREDIENT_QUANTITY = 'EXCEL_DISH_IMPORT_INVALID_INGREDIENT_QUANTITY', 
   EXCEL_DISH_IMPORT_INVALID_INGREDIENTS_JSON = 'EXCEL_DISH_IMPORT_INVALID_INGREDIENTS_JSON', 
+  EXCEL_EXPORT_COOKING_ITEMS_BUTTON = 'EXCEL_EXPORT_COOKING_ITEMS_BUTTON',
+  EXCEL_IMPORT_COOKING_ITEMS_BUTTON = 'EXCEL_IMPORT_COOKING_ITEMS_BUTTON',
+  ALERT_COOKING_ITEMS_EXPORTED_SUCCESS = 'ALERT_COOKING_ITEMS_EXPORTED_SUCCESS',
+  ALERT_COOKING_ITEMS_IMPORTED_SUCCESS = 'ALERT_COOKING_ITEMS_IMPORTED_SUCCESS',
 
 
   // General Alerts
   ALERT_PERMISSION_DENIED = 'ALERT_PERMISSION_DENIED',
   ALERT_INGREDIENTS_EXPORTED_SUCCESS = 'ALERT_INGREDIENTS_EXPORTED_SUCCESS',
-  ALERT_SIGNUP_SUCCESS_PENDING_APPROVAL = 'ALERT_SIGNUP_SUCCESS_PENDING_APPROVAL', // Added
-  ALERT_USER_APPROVED_EMAIL_SIMULATION = 'ALERT_USER_APPROVED_EMAIL_SIMULATION', // Added
+  ALERT_SIGNUP_SUCCESS_PENDING_APPROVAL = 'ALERT_SIGNUP_SUCCESS_PENDING_APPROVAL', 
+  ALERT_USER_APPROVED_EMAIL_SIMULATION = 'ALERT_USER_APPROVED_EMAIL_SIMULATION', 
 
   // Customer Order Actions
   HTML_VIEW_ORDER_BUTTON = 'HTML_VIEW_ORDER_BUTTON',
   PRINT_ORDER_BUTTON = 'PRINT_ORDER_BUTTON',
+  ORDER_TOTAL_COST_LABEL = 'ORDER_TOTAL_COST_LABEL', 
+  SHARE_ORDER_WHATSAPP_BUTTON = 'SHARE_ORDER_WHATSAPP_BUTTON', // Added
+
 
   // Order Ingredient Editing
   EDIT_ORDER_INGREDIENT_TITLE = 'EDIT_ORDER_INGREDIENT_TITLE',
@@ -218,4 +249,12 @@ export enum UITranslationKeys {
   ORDER_INGREDIENT_NAME_LABEL = 'ORDER_INGREDIENT_NAME_LABEL',
   MASTER_INGREDIENT_LABEL = 'MASTER_INGREDIENT_LABEL',
   SELECT_INGREDIENT_PLACEHOLDER = 'SELECT_INGREDIENT_PLACEHOLDER',
+
+  // Order Cooking Item Editing
+  EDIT_ORDER_COOKING_ITEM_TITLE = 'EDIT_ORDER_COOKING_ITEM_TITLE',
+  ADD_ORDER_COOKING_ITEM_TITLE = 'ADD_ORDER_COOKING_ITEM_TITLE',
+  ADD_COOKING_ITEM_TO_ORDER_BUTTON = 'ADD_COOKING_ITEM_TO_ORDER_BUTTON',
+  ORDER_COOKING_ITEM_NAME_LABEL = 'ORDER_COOKING_ITEM_NAME_LABEL',
+  MASTER_COOKING_ITEM_LABEL = 'MASTER_COOKING_ITEM_LABEL',
+  SELECT_COOKING_ITEM_PLACEHOLDER = 'SELECT_COOKING_ITEM_PLACEHOLDER',
 }

@@ -2,12 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { Ingredient, IngredientUnits, Language, LocalizedText, LanguageLabels, UITranslationKeys } from '../types'; 
 import { placeholderImage, DEFAULT_IMAGE_SIZE } from '../constants'; 
-import { getTranslatedText } from '../localization'; // Updated import path
-import ImageInput from './ImageInput'; // Added
-import { getUIText } from '../translations'; // Added for UI localization
+import { getTranslatedText } from '../localization'; 
+import ImageInput from './ImageInput'; 
+import { getUIText } from '../translations'; 
 
 interface IngredientFormProps {
-    onSave: (data: { name: string, imageUrl: string | null, quantity: number, unit: string, id?: string }) => void; // imageUrl can be null
+    onSave: (data: { name: string, imageUrl: string | null, quantity: number, unit: string, price: number, id?: string }) => void;
     onCancel: () => void;
     existingIngredient?: Ingredient | null;
     units: string[];
@@ -21,6 +21,7 @@ const IngredientForm: React.FC<IngredientFormProps> =
     const [imageUrl, setImageUrl] = useState<string | null>(existingIngredient?.imageUrl || null);
     const [quantity, setQuantity] = useState(existingIngredient?.quantity || 0);
     const [unit, setUnit] = useState(existingIngredient?.unit || units[0]);
+    const [price, setPrice] = useState(existingIngredient?.price || 0);
     const [error, setError] = useState('');
 
     useEffect(() => {
@@ -29,19 +30,21 @@ const IngredientForm: React.FC<IngredientFormProps> =
             setImageUrl(existingIngredient.imageUrl || null);
             setQuantity(existingIngredient.quantity || 0);
             setUnit(existingIngredient.unit || units[0]);
+            setPrice(existingIngredient.price || 0);
         } else {
             setName('');
             setImageUrl(null);
             setQuantity(0);
             setUnit(units[0]);
+            setPrice(0);
         }
     }, [existingIngredient, currentUserPreferredLanguage, units]);
 
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!name.trim() || quantity <= 0) {
-            setError('Name and positive quantity are required.'); // This error message could also be localized
+        if (!name.trim() || quantity <= 0 || price < 0) {
+            setError('Name, positive quantity, and non-negative price are required.');
             return;
         }
         setError('');
@@ -51,7 +54,8 @@ const IngredientForm: React.FC<IngredientFormProps> =
             name, 
             imageUrl, 
             quantity, 
-            unit 
+            unit,
+            price
         });
     };
     
@@ -62,6 +66,7 @@ const IngredientForm: React.FC<IngredientFormProps> =
     const imageLabel = getUIText(UITranslationKeys.IMAGE_LABEL, currentUserPreferredLanguage);
     const quantityLabel = getUIText(UITranslationKeys.QUANTITY_LABEL, currentUserPreferredLanguage);
     const unitLabel = getUIText(UITranslationKeys.UNIT_LABEL, currentUserPreferredLanguage);
+    const priceLabel = getUIText(UITranslationKeys.INGREDIENT_PRICE_FOR_QTY_UNIT_LABEL, currentUserPreferredLanguage);
     const cancelText = getUIText(UITranslationKeys.CANCEL, currentUserPreferredLanguage);
     const saveButtonText = existingIngredient 
         ? getUIText(UITranslationKeys.SAVE_CHANGES, currentUserPreferredLanguage) 
@@ -86,13 +91,17 @@ const IngredientForm: React.FC<IngredientFormProps> =
 
         <div>
             <label htmlFor="ing-quantity" className="block text-sm font-medium text-slate-700">{quantityLabel}</label>
-            <input id="ing-quantity" type="number" value={quantity} onChange={e => setQuantity(parseFloat(e.target.value))} min="0.01" step="0.01" className="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" required />
+            <input id="ing-quantity" type="number" value={quantity} onChange={e => setQuantity(parseFloat(e.target.value))} min="0.001" step="0.001" className="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" required />
         </div>
         <div>
             <label htmlFor="ing-unit" className="block text-sm font-medium text-slate-700">{unitLabel}</label>
             <select id="ing-unit" value={unit} onChange={e => setUnit(e.target.value)} className="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
             {units.map(u => <option key={u} value={u}>{u}</option>)}
             </select>
+        </div>
+        <div>
+            <label htmlFor="ing-price" className="block text-sm font-medium text-slate-700">{priceLabel}</label>
+            <input id="ing-price" type="number" value={price} onChange={e => setPrice(parseFloat(e.target.value))} min="0" step="0.001" className="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" required />
         </div>
         <div className="flex justify-end space-x-3 pt-4">
             <button type="button" onClick={onCancel} className="px-4 py-2 text-slate-700 bg-slate-200 hover:bg-slate-300 rounded-md transition-colors">{cancelText}</button>
