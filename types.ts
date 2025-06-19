@@ -92,7 +92,9 @@ export interface CustomerCookingItemSelection {
 }
 
 export interface CumulativeIngredient {
-  name: string; // This will be translated at point of generation
+  id: string; // Unique ID for this entry *within this specific order*.
+  masterIngredientId: string; // ID of the master ingredient from the main 'ingredients' list.
+  name: string; // The translated name of the ingredient for this order.
   totalQuantity: number;
   unit: string;
 }
@@ -121,7 +123,7 @@ export interface Customer {
 export const IngredientUnits: string[] = ['kg', 'gram', 'piece', 'leaves', 'liters', 'ml', 'tsp', 'tbsp', 'cup'];
 export const CookingItemUnits: string[] = ['kg', 'gram', 'piece', 'Big one', 'Small one', 'Medium one', 'pack', 'bottle'];
 
-export type ModalType = 'ingredient' | 'dish' | 'cookingItem' | 'customer' | 'profile' | null;
+export type ModalType = 'ingredient' | 'dish' | 'cookingItem' | 'customer' | 'profile' | 'orderIngredient' | null;
 
 // Enum for UI Translation Keys
 export enum UITranslationKeys {
@@ -139,6 +141,14 @@ export enum UITranslationKeys {
   INGREDIENT_NAME_LABEL = 'INGREDIENT_NAME_LABEL',
   QUANTITY_LABEL = 'QUANTITY_LABEL',
   UNIT_LABEL = 'UNIT_LABEL',
+  // Dishes
+  DISHES_PAGE_TITLE = 'DISHES_PAGE_TITLE', // Added
+  ADD_DISH_TITLE = 'ADD_DISH_TITLE', // Added
+  EDIT_DISH_TITLE = 'EDIT_DISH_TITLE', // Added
+  DISH_NAME_LABEL = 'DISH_NAME_LABEL', // Added
+  PREPARATION_STEPS_LABEL = 'PREPARATION_STEPS_LABEL', // Added
+  SELECT_INGREDIENTS_LABEL = 'SELECT_INGREDIENTS_LABEL', // Added
+  NO_INGREDIENTS_AVAILABLE = 'NO_INGREDIENTS_AVAILABLE', // Added
   // Cooking Items
   COOKING_ITEMS_PAGE_TITLE = 'COOKING_ITEMS_PAGE_TITLE',
   ADD_COOKING_ITEM_TITLE = 'ADD_COOKING_ITEM_TITLE',
@@ -182,12 +192,30 @@ export enum UITranslationKeys {
   EXCEL_INVALID_FILE_FORMAT_ALERT = 'EXCEL_INVALID_FILE_FORMAT_ALERT',
   EXCEL_NO_FILE_SELECTED_ALERT = 'EXCEL_NO_FILE_SELECTED_ALERT',
   EXCEL_HEADER_MISMATCH_ALERT = 'EXCEL_HEADER_MISMATCH_ALERT',
+  EXCEL_EXPORT_DISHES_BUTTON = 'EXCEL_EXPORT_DISHES_BUTTON', 
+  EXCEL_IMPORT_DISHES_BUTTON = 'EXCEL_IMPORT_DISHES_BUTTON', 
+  ALERT_DISHES_EXPORTED_SUCCESS = 'ALERT_DISHES_EXPORTED_SUCCESS', 
+  ALERT_DISHES_IMPORTED_SUCCESS = 'ALERT_DISHES_IMPORTED_SUCCESS', 
+  EXCEL_DISH_IMPORT_INVALID_INGREDIENT_ID = 'EXCEL_DISH_IMPORT_INVALID_INGREDIENT_ID', 
+  EXCEL_DISH_IMPORT_INVALID_INGREDIENT_QUANTITY = 'EXCEL_DISH_IMPORT_INVALID_INGREDIENT_QUANTITY', 
+  EXCEL_DISH_IMPORT_INVALID_INGREDIENTS_JSON = 'EXCEL_DISH_IMPORT_INVALID_INGREDIENTS_JSON', 
+
 
   // General Alerts
   ALERT_PERMISSION_DENIED = 'ALERT_PERMISSION_DENIED',
   ALERT_INGREDIENTS_EXPORTED_SUCCESS = 'ALERT_INGREDIENTS_EXPORTED_SUCCESS',
+  ALERT_SIGNUP_SUCCESS_PENDING_APPROVAL = 'ALERT_SIGNUP_SUCCESS_PENDING_APPROVAL', // Added
+  ALERT_USER_APPROVED_EMAIL_SIMULATION = 'ALERT_USER_APPROVED_EMAIL_SIMULATION', // Added
 
   // Customer Order Actions
   HTML_VIEW_ORDER_BUTTON = 'HTML_VIEW_ORDER_BUTTON',
   PRINT_ORDER_BUTTON = 'PRINT_ORDER_BUTTON',
+
+  // Order Ingredient Editing
+  EDIT_ORDER_INGREDIENT_TITLE = 'EDIT_ORDER_INGREDIENT_TITLE',
+  ADD_ORDER_INGREDIENT_TITLE = 'ADD_ORDER_INGREDIENT_TITLE',
+  ADD_INGREDIENT_TO_ORDER_BUTTON = 'ADD_INGREDIENT_TO_ORDER_BUTTON',
+  ORDER_INGREDIENT_NAME_LABEL = 'ORDER_INGREDIENT_NAME_LABEL',
+  MASTER_INGREDIENT_LABEL = 'MASTER_INGREDIENT_LABEL',
+  SELECT_INGREDIENT_PLACEHOLDER = 'SELECT_INGREDIENT_PLACEHOLDER',
 }

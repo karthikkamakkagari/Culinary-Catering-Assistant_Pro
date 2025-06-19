@@ -1,9 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import { Dish, Ingredient, DishIngredient, Language, LocalizedText, LanguageLabels } from '../types'; 
+import { Dish, Ingredient, DishIngredient, Language, LocalizedText, LanguageLabels, UITranslationKeys } from '../types'; 
 import { placeholderImage, DEFAULT_IMAGE_SIZE } from '../constants'; 
-import { getTranslatedText } from '../localization'; // Updated import path
-import ImageInput from './ImageInput'; // Added
+import { getTranslatedText } from '../localization'; 
+import ImageInput from './ImageInput'; 
+import { getUIText } from '../translations';
 
 interface DishFormProps {
     onSave: (data: { name: string, imageUrl: string | null, ingredients: DishIngredient[], id?: string, preparationSteps: string }) => void; // imageUrl can be null
@@ -61,7 +62,7 @@ const DishForm: React.FC<DishFormProps> =
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
          if (!name.trim() || selectedIngredients.filter(si => si.quantity > 0).length === 0) {
-            setError('Dish name and at least one ingredient with a quantity greater than 0 are required.');
+            setError('Dish name and at least one ingredient with a quantity greater than 0 are required.'); // This error could be localized too
             return;
         }
         setError('');
@@ -73,25 +74,39 @@ const DishForm: React.FC<DishFormProps> =
             preparationSteps: preparationStepsString,
         });
     };
+    
+    const formTitle = existingDish 
+        ? getUIText(UITranslationKeys.EDIT_DISH_TITLE, currentUserPreferredLanguage)
+        : getUIText(UITranslationKeys.ADD_DISH_TITLE, currentUserPreferredLanguage);
+    const nameLabel = `${getUIText(UITranslationKeys.DISH_NAME_LABEL, currentUserPreferredLanguage)} (in ${LanguageLabels[currentUserPreferredLanguage]})`;
+    const imageLabel = getUIText(UITranslationKeys.IMAGE_LABEL, currentUserPreferredLanguage);
+    const prepStepsLabel = `${getUIText(UITranslationKeys.PREPARATION_STEPS_LABEL, currentUserPreferredLanguage)} (in ${LanguageLabels[currentUserPreferredLanguage]})`;
+    const selectIngredientsLabel = getUIText(UITranslationKeys.SELECT_INGREDIENTS_LABEL, currentUserPreferredLanguage);
+    const noIngredientsAvailableText = getUIText(UITranslationKeys.NO_INGREDIENTS_AVAILABLE, currentUserPreferredLanguage);
+    const cancelText = getUIText(UITranslationKeys.CANCEL, currentUserPreferredLanguage);
+    const saveButtonText = existingDish 
+        ? getUIText(UITranslationKeys.SAVE_CHANGES, currentUserPreferredLanguage) 
+        : getUIText(UITranslationKeys.ADD_DISH_TITLE, currentUserPreferredLanguage);
+
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4" aria-labelledby="dish-form-title">
-        <h2 id="dish-form-title" className="text-2xl font-semibold text-slate-800 mb-6">{existingDish ? 'Edit Dish' : 'Add Dish'}</h2>
+        <h2 id="dish-form-title" className="text-2xl font-semibold text-slate-800 mb-6">{formTitle}</h2>
         {error && <p className="text-red-500 text-sm bg-red-100 p-2 rounded-md">{error}</p>}
         <div>
-            <label htmlFor="dish-name" className="block text-sm font-medium text-slate-700">Dish Name (in {LanguageLabels[currentUserPreferredLanguage]})</label>
+            <label htmlFor="dish-name" className="block text-sm font-medium text-slate-700">{nameLabel}</label>
             <input id="dish-name" type="text" value={name} onChange={e => setName(e.target.value)} className="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" required />
         </div>
         
         <ImageInput
-            label="Dish Image"
+            label={imageLabel}
             idPrefix="dish-img"
             currentImageUrl={imageUrl}
             onImageUrlChange={setImageUrl}
         />
 
         <div>
-            <label htmlFor="dish-prep-steps" className="block text-sm font-medium text-slate-700">Preparation Steps (in {LanguageLabels[currentUserPreferredLanguage]})</label>
+            <label htmlFor="dish-prep-steps" className="block text-sm font-medium text-slate-700">{prepStepsLabel}</label>
             <textarea 
                 id="dish-prep-steps" 
                 value={preparationStepsString} 
@@ -102,8 +117,8 @@ const DishForm: React.FC<DishFormProps> =
             />
         </div>
         <div>
-            <h3 className="text-lg font-medium text-slate-700 mb-2">Select Ingredients</h3>
-            {ingredients.length === 0 && <p className="text-sm text-slate-500">No ingredients available. Please add some first.</p>}
+            <h3 className="text-lg font-medium text-slate-700 mb-2">{selectIngredientsLabel}</h3>
+            {ingredients.length === 0 && <p className="text-sm text-slate-500">{noIngredientsAvailableText}</p>}
             <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
             {ingredients.map(ing => {
                 const currentSelection = selectedIngredients.find(si => si.ingredientId === ing.id);
@@ -142,8 +157,8 @@ const DishForm: React.FC<DishFormProps> =
             </div>
         </div>
         <div className="flex justify-end space-x-3 pt-4">
-            <button type="button" onClick={onCancel} className="px-4 py-2 text-slate-700 bg-slate-200 hover:bg-slate-300 rounded-md transition-colors">Cancel</button>
-            <button type="submit" className="px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors">{existingDish ? 'Save Changes' : 'Add Dish'}</button>
+            <button type="button" onClick={onCancel} className="px-4 py-2 text-slate-700 bg-slate-200 hover:bg-slate-300 rounded-md transition-colors">{cancelText}</button>
+            <button type="submit" className="px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors">{saveButtonText}</button>
         </div>
         </form>
     );

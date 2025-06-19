@@ -15,49 +15,128 @@ import CookingItemForm from './components/CookingItemForm';
 import UserManagementPage from './components/UserManagementPage';
 import UserDetailsViewComponent from './components/UserDetailsViewComponent';
 import PublicHomePage from './components/PublicHomePage';
+import OrderIngredientForm from './components/OrderIngredientForm'; 
 import { getUIText } from './translations';
-import { getTranslatedText } from './localization'; // Import from new location
+import { getTranslatedText } from './localization'; 
 import * as XLSX from 'xlsx';
 
 const generateId = () => Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
 
-// getTranslatedText function moved to localization.ts
+// localStorage keys
+const APP_USERS_KEY = 'culinaryCateringAppUsers_v1';
+const APP_INGREDIENTS_KEY = 'culinaryCateringAppIngredients_v1';
+const APP_DISHES_KEY = 'culinaryCateringAppDishes_v1';
+const APP_COOKING_ITEMS_KEY = 'culinaryCateringAppCookingItems_v1';
+const APP_CUSTOMERS_KEY = 'culinaryCateringAppCustomers_v1';
 
 
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>(Page.PublicHome);
   const [currentTime, setCurrentTime] = useState(new Date());
 
-  const [users, setUsers] = useState<AuthUser[]>([DEFAULT_SUPREM_USER]);
+  const [users, setUsers] = useState<AuthUser[]>(() => {
+    const savedUsersJson = localStorage.getItem(APP_USERS_KEY);
+    let loadedUsers: AuthUser[] = [];
+    if (savedUsersJson) {
+        try {
+            loadedUsers = JSON.parse(savedUsersJson);
+        } catch (e) {
+            console.error('Failed to parse users from localStorage:', e);
+            return [DEFAULT_SUPREM_USER];
+        }
+    }
+
+    const supremUserInStorage = loadedUsers.find(u => u.id === DEFAULT_SUPREM_USER.id);
+    if (supremUserInStorage) {
+        const updatedSuprem = {
+            ...supremUserInStorage,
+            password: DEFAULT_SUPREM_USER.password, 
+            role: DEFAULT_SUPREM_USER.role,         
+            isApproved: DEFAULT_SUPREM_USER.isApproved, 
+            cateringName: supremUserInStorage.cateringName || DEFAULT_SUPREM_USER.cateringName,
+            phone: supremUserInStorage.phone || DEFAULT_SUPREM_USER.phone,
+            address: supremUserInStorage.address || DEFAULT_SUPREM_USER.address,
+            email: supremUserInStorage.email || DEFAULT_SUPREM_USER.email,
+            imageUrl: supremUserInStorage.imageUrl || DEFAULT_SUPREM_USER.imageUrl,
+            preferredLanguage: supremUserInStorage.preferredLanguage || DEFAULT_SUPREM_USER.preferredLanguage,
+            credits: DEFAULT_SUPREM_USER.credits 
+        };
+        return [updatedSuprem, ...loadedUsers.filter(u => u.id !== DEFAULT_SUPREM_USER.id)];
+    } else if (loadedUsers.length > 0) {
+        return [DEFAULT_SUPREM_USER, ...loadedUsers];
+    } else {
+        return [DEFAULT_SUPREM_USER];
+    }
+  });
+
+  const [ingredients, setIngredients] = useState<Ingredient[]>(() => {
+    const saved = localStorage.getItem(APP_INGREDIENTS_KEY);
+    if (saved) {
+        try { return JSON.parse(saved); } catch (e) { console.error("Error parsing ingredients", e); }
+    }
+    return [
+      { id: 'ing1', name: { en: 'Salt', te: 'ఉప్పు', ta: 'உப்பு', kn: 'ಉಪ್ಪು', hi: 'नमक' }, imageUrl: placeholderImage(100,100,'salt'), quantity: 1000, unit: 'gram' },
+      { id: 'ing2', name: { en: 'Tomato', te: 'టమోటా', ta: 'தக்காளி', kn: 'ಟೊಮೆಟೊ', hi: 'टमाटर' }, imageUrl: placeholderImage(100,100,'tomato'), quantity: 50, unit: 'piece' },
+      { id: 'ing3', name: { en: 'Onion', te: 'ఉల్లిపాయ', ta: 'வெங்காயம்', kn: 'ಈರುಳ್ಳಿ', hi: 'प्याज' }, imageUrl: placeholderImage(100,100,'onion'), quantity: 60, unit: 'piece' },
+    ];
+  });
+
+  const [dishes, setDishes] = useState<Dish[]>(() => {
+    const saved = localStorage.getItem(APP_DISHES_KEY);
+    if (saved) {
+        try { return JSON.parse(saved); } catch (e) { console.error("Error parsing dishes", e); }
+    }
+    return [
+      {
+        id: 'dish1',
+        name: { en: 'Tomato Soup', te: 'టమోటా సూప్', hi: 'टमाटर का सूप' },
+        imageUrl: placeholderImage(150,150,'soup'),
+        ingredients: [{ ingredientId: 'ing2', quantity: 5 }, { ingredientId: 'ing1', quantity: 0.1}],
+        preparationSteps: {
+          en: "1. Sauté onions and garlic.\n2. Add chopped tomatoes and vegetable broth.\n3. Simmer for 20 minutes.\n4. Blend until smooth.\n5. Season with salt, pepper, and herbs.",
+          te: "1. ఉల్లిపాయలు మరియు వెల్లుల్లి వేయించాలి.\n2. తరిగిన టమోటాలు మరియు కూరగాయల రసం జోడించండి.\n3. 20 నిమిషాలు ఆవేశమును అణిచిపెట్టుకొను.\n4. మృదువైన వరకు కలపండి.\n5. ఉప్పు, మిరియాలు, మరియు మూలికలతో సీజన్.",
+          hi: "1. प्याज और लहसुन भूनें।\n2. कटे हुए टमाटर और सब्जी का शोरबा डालें।\n3. 20 मिनट तक उबालें।\n4. चिकना होने तक ब्लेंड करें।\n5. नमक, काली मिर्च और जड़ी बूटियों के साथ सीजन करें।"
+        }
+      },
+    ];
+  });
+
+  const [cookingItems, setCookingItems] = useState<CookingItem[]>(() => {
+    const saved = localStorage.getItem(APP_COOKING_ITEMS_KEY);
+    if (saved) {
+        try { return JSON.parse(saved); } catch (e) { console.error("Error parsing cooking items", e); }
+    }
+    return [
+      { id: 'ci1', name: { en: 'Large Pot', te: 'పెద్ద కుండ' }, summary: {en: 'A large pot for cooking for many.', te: 'చాలా మందికి వండడానికి పెద్ద కుండ.'}, imageUrl: placeholderImage(100,100,'pot'), unit: 'piece' },
+    ];
+  });
+
+  const [customers, setCustomers] = useState<Customer[]>(() => {
+    const saved = localStorage.getItem(APP_CUSTOMERS_KEY);
+    if (saved) {
+        try { return JSON.parse(saved); } catch (e) { console.error("Error parsing customers", e); }
+    }
+    return [];
+  });
+
+
+  useEffect(() => { localStorage.setItem(APP_USERS_KEY, JSON.stringify(users)); }, [users]);
+  useEffect(() => { localStorage.setItem(APP_INGREDIENTS_KEY, JSON.stringify(ingredients)); }, [ingredients]);
+  useEffect(() => { localStorage.setItem(APP_DISHES_KEY, JSON.stringify(dishes)); }, [dishes]);
+  useEffect(() => { localStorage.setItem(APP_COOKING_ITEMS_KEY, JSON.stringify(cookingItems)); }, [cookingItems]);
+  useEffect(() => { localStorage.setItem(APP_CUSTOMERS_KEY, JSON.stringify(customers)); }, [customers]);
+
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
-
-  // Sample multilingual data
-  const [ingredients, setIngredients] = useState<Ingredient[]>([
-    { id: 'ing1', name: { en: 'Salt', te: 'ఉప్పు', ta: 'உப்பு', kn: 'ಉಪ್ಪು', hi: 'नमक' }, imageUrl: placeholderImage(100,100,'salt'), quantity: 1000, unit: 'gram' },
-    { id: 'ing2', name: { en: 'Tomato', te: 'టమోటా', ta: 'தக்காளி', kn: 'ಟೊಮೆಟೊ', hi: 'टमाटर' }, imageUrl: placeholderImage(100,100,'tomato'), quantity: 50, unit: 'piece' },
-    { id: 'ing3', name: { en: 'Onion', te: 'ఉల్లిపాయ', ta: 'வெங்காயம்', kn: 'ಈರುಳ್ಳಿ', hi: 'प्याज' }, imageUrl: placeholderImage(100,100,'onion'), quantity: 60, unit: 'piece' },
-  ]);
-  const [dishes, setDishes] = useState<Dish[]>([
-    {
-      id: 'dish1',
-      name: { en: 'Tomato Soup', te: 'టమోటా సూప్', hi: 'टमाटर का सूप' },
-      imageUrl: placeholderImage(150,150,'soup'),
-      ingredients: [{ ingredientId: 'ing2', quantity: 5 }, { ingredientId: 'ing1', quantity: 0.1}],
-      preparationSteps: {
-        en: "1. Sauté onions and garlic.\n2. Add chopped tomatoes and vegetable broth.\n3. Simmer for 20 minutes.\n4. Blend until smooth.\n5. Season with salt, pepper, and herbs.",
-        te: "1. ఉల్లిపాయలు మరియు వెల్లుల్లి వేయించాలి.\n2. తరిగిన టమోటాలు మరియు కూరగాయల రసం జోడించండి.\n3. 20 నిమిషాలు ఆవేశమును అణిచిపెట్టుకొను.\n4. మృదువైన వరకు కలపండి.\n5. ఉప్పు, మిరియాలు, మరియు మూలికలతో సీజన్.",
-        hi: "1. प्याज और लहसुन भूनें।\n2. कटे हुए टमाटर और सब्जी का शोरबा डालें।\n3. 20 मिनट तक उबालें।\n4. चिकना होने तक ब्लेंड करें।\n5. नमक, काली मिर्च और जड़ी बूटियों के साथ सीजन करें।"
-      }
-    },
-  ]);
-  const [cookingItems, setCookingItems] = useState<CookingItem[]>([
-    { id: 'ci1', name: { en: 'Large Pot', te: 'పెద్ద కుండ' }, summary: {en: 'A large pot for cooking for many.', te: 'చాలా మందికి వండడానికి పెద్ద కుండ.'}, imageUrl: placeholderImage(100,100,'pot'), unit: 'piece' },
-  ]);
-  const [customers, setCustomers] = useState<Customer[]>([]);
-
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState<ModalType>(null);
   const [editingItem, setEditingItem] = useState<any | null>(null);
+  const [editingOrderContext, setEditingOrderContext] = useState<{
+    customerId: string;
+    orderLineItemId?: string; 
+    isAdding: boolean;
+    existingOrderItemData?: { name: string; quantity: number; unit: string; masterIngredientId: string; };
+  } | null>(null);
+
 
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -65,6 +144,7 @@ const App: React.FC = () => {
   const [previousPageBeforeUserDetails, setPreviousPageBeforeUserDetails] = useState<Page | null>(null);
 
   const importIngredientsInputRef = useRef<HTMLInputElement>(null);
+  const importDishesInputRef = useRef<HTMLInputElement>(null); 
 
 
   useEffect(() => {
@@ -89,7 +169,7 @@ const App: React.FC = () => {
       preferredLanguage: newUserData.preferredLanguage || Language.EN,
     };
     setUsers(prev => [...prev, newUser]);
-    alert('Waiting for approval.'); // Updated alert message
+    alert(getUIText(UITranslationKeys.ALERT_SIGNUP_SUCCESS_PENDING_APPROVAL, newUser.preferredLanguage));
     setCurrentPage(Page.Login);
   };
 
@@ -102,8 +182,20 @@ const App: React.FC = () => {
 
   const handleApproveUser = (userId: string, roleToAssign: UserRole) => {
     if (currentUser?.role !== UserRole.SUPREM) return;
+    
+    let approvedUserName = 'Unknown User';
+    const userToUpdate = users.find(u => u.id === userId); 
+    if (userToUpdate) {
+        approvedUserName = userToUpdate.username;
+    }
+
     setUsers(prevUsers => prevUsers.map(u => u.id === userId ? { ...u, isApproved: true, role: roleToAssign } : u));
-    alert(`User approved and role set to ${roleToAssign}!`);
+    
+    alert(getUIText(UITranslationKeys.ALERT_USER_APPROVED_EMAIL_SIMULATION, currentUser.preferredLanguage, Language.EN, {
+        userName: approvedUserName,
+        roleAssigned: roleToAssign,
+        userEmail: userToUpdate?.email || 'N/A'
+    }));
   };
 
   const handleSetUserCredits = (userId: string, newCredits: number) => {
@@ -157,7 +249,7 @@ const App: React.FC = () => {
     if (selectedUserForView?.id === userId) {
         setSelectedUserForView(prev => prev ? { ...prev, ...updatedDetails } as AuthUser : null);
     }
-    if (currentUser?.id === userId) {
+    if (currentUser?.id === userId) { // If Suprem is editing themselves via this detailed view (though unlikely UI path for self)
         setCurrentUser(prev => prev ? { ...prev, ...updatedDetails } as AuthUser : null);
     }
     alert('User details updated successfully by Suprem.');
@@ -173,47 +265,55 @@ const App: React.FC = () => {
 
   const openModal = (type: ModalType, item: any | null = null) => {
     setModalType(type);
-    setEditingItem(item);
+    setEditingItem(item); 
+    setEditingOrderContext(null); 
     setModalOpen(true);
   };
-
+  
   const closeModal = () => {
     setModalOpen(false);
     setEditingItem(null);
     setModalType(null);
+    setEditingOrderContext(null); 
   };
+  
 
-  const canPerformAction = (action: 'add' | 'edit' | 'delete', entity: 'ingredient' | 'dish' | 'cookingItem' | 'customer', item?: any): boolean => {
+  const canPerformAction = (action: 'add' | 'edit' | 'delete', entity: 'ingredient' | 'dish' | 'cookingItem' | 'customer' | 'orderIngredient', item?: any): boolean => {
     if (!currentUser) return false;
     const { role, credits, id: currentUserId } = currentUser;
 
     if (role === UserRole.SUPREM) return true;
+    
+    if (entity === 'orderIngredient') {
+        if (role === UserRole.ADMIN) return true; 
+        if (role === UserRole.USER && item && item.customerUserId === currentUserId) return true; 
+        return false;
+    }
+
 
     if (entity === 'ingredient') {
         if (role === UserRole.ADMIN) {
-            if (action === 'add') return false; // ADMIN cannot add new ingredients
-            return true; // ADMIN can edit/delete existing ingredients
+            if (action === 'add') return false; 
+            return true; 
         }
-        return false; // USER cannot manage ingredients
+        return false; 
     }
 
     if (entity === 'dish' || entity === 'cookingItem') {
-        if (role === UserRole.ADMIN) return true; // Admins can manage dishes and cooking items
-        return false; // Users cannot
+        if (role === UserRole.ADMIN) return true; 
+        return false; 
     }
     
     if (entity === 'customer') {
         if (role === UserRole.ADMIN) {
             if (action === 'add') return credits > 0;
             if (action === 'edit' || action === 'delete') {
-                // Admins can edit/delete customers they created, if credits are non-negative
-                return item && item.userId === currentUserId && credits >= 0;
+                return item && item.userId === currentUserId && credits >= 0; 
             }
         }
         if (role === UserRole.USER) {
             if (action === 'add') return credits > 0;
             if (action === 'edit' || action === 'delete') {
-                // Users can edit/delete customers they created, if credits are non-negative
                 return item && item.userId === currentUserId && credits >= 0;
             }
         }
@@ -223,7 +323,7 @@ const App: React.FC = () => {
   };
 
   const handleSaveIngredient = (ingredientData: {name: string, imageUrl:string | null, quantity: number, unit: string, id?: string}) => {
-    if (!canPerformAction(editingItem ? 'edit' : 'add', 'ingredient') || !currentUser) {
+    if (!canPerformAction(editingItem ? 'edit' : 'add', 'ingredient', editingItem) || !currentUser) {
       alert(getUIText(UITranslationKeys.ALERT_PERMISSION_DENIED, currentUser.preferredLanguage));
       return;
     }
@@ -247,7 +347,7 @@ const App: React.FC = () => {
   };
 
   const handleDeleteIngredient = (id: string) => {
-     if (!canPerformAction('delete', 'ingredient') || !currentUser) {
+     if (!canPerformAction('delete', 'ingredient', ingredients.find(i => i.id === id)) || !currentUser) {
       alert(getUIText(UITranslationKeys.ALERT_PERMISSION_DENIED, currentUser.preferredLanguage));
       return;
     }
@@ -259,7 +359,7 @@ const App: React.FC = () => {
   };
 
   const handleSaveDish = (dishData: {name: string, imageUrl:string | null, ingredients: DishIngredient[], id?:string, preparationSteps: string}) => {
-    if (!canPerformAction(editingItem ? 'edit' : 'add', 'dish') || !currentUser) {
+    if (!canPerformAction(editingItem ? 'edit' : 'add', 'dish', editingItem) || !currentUser) {
       alert(getUIText(UITranslationKeys.ALERT_PERMISSION_DENIED, currentUser.preferredLanguage));
       return;
     }
@@ -288,7 +388,7 @@ const App: React.FC = () => {
   };
 
   const handleDeleteDish = (id: string) => {
-    if (!canPerformAction('delete', 'dish') || !currentUser) {
+    if (!canPerformAction('delete', 'dish', dishes.find(d => d.id === id)) || !currentUser) {
       alert(getUIText(UITranslationKeys.ALERT_PERMISSION_DENIED, currentUser.preferredLanguage));
       return;
     }
@@ -300,7 +400,7 @@ const App: React.FC = () => {
   };
 
   const handleSaveCookingItem = (itemData: {name: string, imageUrl:string | null, summary: string, unit: string, id?: string}) => {
-     if (!canPerformAction(editingItem ? 'edit' : 'add', 'cookingItem') || !currentUser) {
+     if (!canPerformAction(editingItem ? 'edit' : 'add', 'cookingItem', editingItem) || !currentUser) {
       alert(getUIText(UITranslationKeys.ALERT_PERMISSION_DENIED, currentUser.preferredLanguage));
       return;
     }
@@ -327,7 +427,7 @@ const App: React.FC = () => {
   };
 
   const handleDeleteCookingItem = (id: string) => {
-    if (!canPerformAction('delete', 'cookingItem') || !currentUser) {
+    if (!canPerformAction('delete', 'cookingItem', cookingItems.find(ci => ci.id === id)) || !currentUser) {
       alert(getUIText(UITranslationKeys.ALERT_PERMISSION_DENIED, currentUser.preferredLanguage));
       return;
     }
@@ -357,6 +457,9 @@ const App: React.FC = () => {
             id: originalCustomer.id,
             imageUrl: finalImageUrl,
             userId: originalCustomer.userId,
+            generatedOrder: originalCustomer.generatedOrder ? {
+                ...originalCustomer.generatedOrder,
+            } : null,
         };
 
         setCustomers(prevCustomers =>
@@ -373,7 +476,7 @@ const App: React.FC = () => {
 
         const newCustomer: Customer = {
             ...submittedCustomerData,
-            id: generateId(), // Ensure new customers get a new ID
+            id: generateId(), 
             imageUrl: finalImageUrl,
             userId: (currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.USER) ? currentUser.id : undefined,
             generatedOrder: null,
@@ -430,7 +533,6 @@ const App: React.FC = () => {
     alert('Customer record deleted.');
   };
 
-  // --- Smart Ingredient Calculation Helpers ---
   const convertToBaseUnit = (quantity: number, unit: string): { quantityInBase: number; baseUnit: string } => {
     const unitLower = unit.toLowerCase();
     const conversion = UnitConversionFactors[unitLower];
@@ -438,12 +540,9 @@ const App: React.FC = () => {
     if (conversion) {
         return { quantityInBase: quantity * conversion.toBase, baseUnit: conversion.baseUnit };
     }
-    // For units not in factors (like 'piece', 'leaves'), or if baseUnit is not weight/volume (e.g. 'cup' of something specific)
-    // pass through or handle as discrete. For now, pass through as 'piece' if not explicitly volume/weight.
     if (unitLower === IngredientBaseUnits.PIECE.toLowerCase() || unitLower === IngredientBaseUnits.LEAVES.toLowerCase()) {
          return { quantityInBase: quantity, baseUnit: unitLower };
     }
-    // Default pass-through if no specific conversion found, assuming it's a discrete unit or already base.
     return { quantityInBase: quantity, baseUnit: unitLower };
   };
 
@@ -460,10 +559,8 @@ const App: React.FC = () => {
         }
         return { displayQuantity: quantityInBase, displayUnit: 'ml' };
     }
-    // For discrete units like 'piece', 'leaves', or unconvertible pass-throughs
     return { displayQuantity: quantityInBase, displayUnit: baseUnit };
   };
-  // --- End Smart Ingredient Calculation Helpers ---
 
   const handleGenerateOrder = (customerId: string) => {
     const customer = customers.find(c => c.id === customerId);
@@ -482,18 +579,10 @@ const App: React.FC = () => {
 
             const current = cumulativeIngredientsMap.get(ingredient.id) || {
                 totalQuantityInBase: 0,
-                baseUnit: baseUnit, // Store the base unit
+                baseUnit: baseUnit, 
                 displayName: getTranslatedText(ingredient.name, currentUser.preferredLanguage)
             };
-
-            // Ensure accumulation happens in the same base unit if an ingredient is used with different initial units
-            if (current.baseUnit !== baseUnit && ( (current.baseUnit === IngredientBaseUnits.WEIGHT && baseUnit === IngredientBaseUnits.WEIGHT) || (current.baseUnit === IngredientBaseUnits.VOLUME && baseUnit === IngredientBaseUnits.VOLUME) ) ){
-                // This scenario (e.g. salt in grams and salt in kg for same dish) should ideally be standardized
-                // or the convertToBaseUnit should always return the primary base (gram/ml).
-                // For now, if baseUnits are compatible (both weight or both volume), it should be fine.
-                // If radically different (e.g. piece vs gram), the map key (ingredient.id) handles separation.
-            }
-
+            
             current.totalQuantityInBase += requiredQuantityInBase;
             cumulativeIngredientsMap.set(ingredient.id, current);
           }
@@ -501,12 +590,14 @@ const App: React.FC = () => {
       }
     });
 
-    const cumulativeIngredientsResult: CumulativeIngredient[] = Array.from(cumulativeIngredientsMap.values()).map(entry => {
+    const cumulativeIngredientsResult: CumulativeIngredient[] = Array.from(cumulativeIngredientsMap.entries()).map(([masterIngredientId, entry]) => {
         const { displayQuantity, displayUnit } = formatDisplayQuantity(entry.totalQuantityInBase, entry.baseUnit);
         return {
-            name: entry.displayName,
+            id: generateId(), 
+            masterIngredientId: masterIngredientId, 
+            name: entry.displayName, 
             totalQuantity: displayQuantity,
-            unit: displayUnit
+            unit: displayUnit,
         };
     });
 
@@ -527,6 +618,117 @@ const App: React.FC = () => {
     setCustomers(prev => prev.map(c => c.id === customerId ? { ...c, generatedOrder } : c));
     alert(`Order generated for ${customer.name}! Check customer details.`);
   };
+
+
+    const handleOpenAddOrderIngredientModal = (customerId: string) => {
+        setEditingOrderContext({ customerId, isAdding: true });
+        setModalType('orderIngredient');
+        setModalOpen(true);
+    };
+
+    const handleOpenEditOrderIngredientModal = (customerId: string, orderLineItemId: string) => {
+        const customer = customers.find(c => c.id === customerId);
+        if (!customer || !customer.generatedOrder) return;
+        const orderItem = customer.generatedOrder.cumulativeIngredients.find(item => item.id === orderLineItemId);
+        if (!orderItem) return;
+
+        setEditingOrderContext({
+            customerId,
+            orderLineItemId,
+            isAdding: false,
+            existingOrderItemData: {
+                name: orderItem.name,
+                quantity: orderItem.totalQuantity,
+                unit: orderItem.unit,
+                masterIngredientId: orderItem.masterIngredientId,
+            },
+        });
+        setModalType('orderIngredient');
+        setModalOpen(true);
+    };
+    
+    const handleSaveOrderIngredient = (data: {
+        customerId: string;
+        orderLineItemId?: string;
+        masterIngredientId?: string;
+        quantity: number;
+        unit: string;
+        isAdding: boolean;
+    }) => {
+        if (!currentUser) return;
+        setCustomers(prevCustomers =>
+            prevCustomers.map(customer => {
+                if (customer.id === data.customerId) {
+                    if (!customer.generatedOrder) { 
+                        console.error("Attempted to modify non-existent generated order");
+                        return customer;
+                    }
+                    let updatedCumulativeIngredients = [...customer.generatedOrder.cumulativeIngredients];
+
+                    if (data.isAdding && data.masterIngredientId) {
+                        const masterIngredient = ingredients.find(ing => ing.id === data.masterIngredientId);
+                        if (masterIngredient) {
+                            const newOrderItem: CumulativeIngredient = {
+                                id: generateId(), 
+                                masterIngredientId: data.masterIngredientId,
+                                name: getTranslatedText(masterIngredient.name, currentUser.preferredLanguage),
+                                totalQuantity: data.quantity,
+                                unit: data.unit,
+                            };
+                            updatedCumulativeIngredients.push(newOrderItem);
+                        }
+                    } else if (!data.isAdding && data.orderLineItemId) {
+                        updatedCumulativeIngredients = updatedCumulativeIngredients.map(item =>
+                            item.id === data.orderLineItemId
+                                ? { ...item, totalQuantity: data.quantity, unit: data.unit }
+                                : item
+                        );
+                    }
+                    return {
+                        ...customer,
+                        generatedOrder: {
+                            ...customer.generatedOrder,
+                            cumulativeIngredients: updatedCumulativeIngredients,
+                        },
+                    };
+                }
+                return customer;
+            })
+        );
+        closeModal();
+    };
+
+    const handleDeleteOrderIngredient = (customerId: string, orderLineItemId: string) => {
+         if (!currentUser) return;
+         const customer = customers.find(c => c.id === customerId);
+         if (!customer) return;
+
+         const itemPermissionContext = { customerUserId: customer.userId };
+         if (!canPerformAction('delete', 'orderIngredient', itemPermissionContext)) {
+             alert(getUIText(UITranslationKeys.ALERT_PERMISSION_DENIED, currentUser.preferredLanguage));
+             return;
+         }
+
+        setCustomers(prevCustomers =>
+            prevCustomers.map(cust => {
+                if (cust.id === customerId && cust.generatedOrder) {
+                    const updatedIngredients = cust.generatedOrder.cumulativeIngredients.filter(
+                        item => item.id !== orderLineItemId
+                    );
+                    return {
+                        ...cust,
+                        generatedOrder: {
+                            ...cust.generatedOrder,
+                            cumulativeIngredients: updatedIngredients,
+                        },
+                    };
+                }
+                return cust;
+            })
+        );
+        alert('Ingredient removed from order.');
+    };
+
 
   const generateOrderHtmlContent = (customer: Customer, forUser: AuthUser): string => {
     if (!customer.generatedOrder) return "<p>Order not generated.</p>";
@@ -551,6 +753,7 @@ const App: React.FC = () => {
           .section { margin-bottom: 20px; }
           .section p { margin: 5px 0; }
           .section strong { display: inline-block; min-width: 120px; }
+          hr.section-separator { border: 0; height: 1px; background-color: #eee; margin: 20px 0; }
           table { width: 100%; border-collapse: collapse; margin-top: 10px; }
           th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
           th { background-color: #f2f2f2; }
@@ -567,18 +770,18 @@ const App: React.FC = () => {
     }
     html += `<h1>${forUser.cateringName || APP_TITLE}</h1>`;
     html += `<p class="meta-info">${getUIText(UITranslationKeys.PDF_ORDER_SUMMARY_TITLE, userLang)}<br>${getUIText(UITranslationKeys.PDF_GENERATED_ON_LABEL, userLang)} ${new Date().toLocaleString()}</p>`;
-
+    html += `<hr class="section-separator">`;
     html += `<div class="section"><h2>${getUIText(UITranslationKeys.PDF_PREPARED_BY_LABEL, userLang)}</h2>`;
     html += `<p><strong>${getUIText(UITranslationKeys.NAME_LABEL, userLang)}</strong> ${forUser.username}</p>`;
     html += `<p><strong>${getUIText(UITranslationKeys.PDF_USER_CATERING_NAME_LABEL, userLang)}</strong> ${forUser.cateringName}</p>`;
     html += `<p><strong>${getUIText(UITranslationKeys.PDF_USER_PHONE_LABEL, userLang)}</strong> ${forUser.phone}</p>`;
     html += `<p><strong>${getUIText(UITranslationKeys.PDF_USER_ADDRESS_LABEL, userLang)}</strong> ${forUser.address}</p></div>`;
-
+    html += `<hr class="section-separator">`;
     html += `<div class="section"><h2>${getUIText(UITranslationKeys.PDF_CUSTOMER_LABEL, userLang)} ${name}</h2>`;
     html += `<p><strong>${getUIText(UITranslationKeys.PDF_CUSTOMER_PHONE_LABEL, userLang)}</strong> ${phone}</p>`;
     html += `<p><strong>${getUIText(UITranslationKeys.PDF_CUSTOMER_ADDRESS_LABEL, userLang)}</strong> ${address}</p>`;
     html += `<p><strong>${getUIText(UITranslationKeys.PDF_NUM_PERSONS_LABEL, userLang)}</strong> ${numberOfPersons}</p></div>`;
-
+    html += `<hr class="section-separator">`;
     html += `<div class="section"><h2>${getUIText(UITranslationKeys.PDF_SELECTED_DISHES_TITLE, userLang)}</h2>`;
     if (customer.selectedDishes.length > 0) {
         html += `<ul>`;
@@ -617,7 +820,7 @@ const App: React.FC = () => {
         html += `<p>${getUIText(UITranslationKeys.PDF_NO_COOKING_ITEMS_SELECTED, userLang)}</p>`;
     }
     html += `</div>`;
-
+    html += `<hr class="section-separator">`;
     html += `<p class="footer">${getUIText(UITranslationKeys.PDF_THANK_YOU_MESSAGE, userLang)}</p>`;
     html += `</div></body></html>`;
     return html;
@@ -648,10 +851,9 @@ const App: React.FC = () => {
     if (printWindow) {
       printWindow.document.write(htmlContent);
       printWindow.document.close();
-      printWindow.onload = () => { // Ensure content is loaded before printing
-        printWindow.focus(); // Focus is important for some browsers
+      printWindow.onload = () => { 
+        printWindow.focus(); 
         printWindow.print();
-        // printWindow.close(); // Optional: close after print dialog
       };
     } else {
       alert("Could not open new window for printing. Please check your pop-up blocker settings.");
@@ -690,30 +892,37 @@ const App: React.FC = () => {
         doc.text(text, (pageWidth - textWidth(text)) / 2, y);
     };
 
-    // Add Logo (if available)
     if (currentUser.imageUrl) {
         try {
             const imgData = currentUser.imageUrl;
-            let imageFormat = 'JPEG';
+            let imageFormat = 'JPEG'; 
             if (imgData.startsWith('data:image/png') || imgData.toLowerCase().endsWith('.png')) {
                 imageFormat = 'PNG';
             } else if (imgData.startsWith('data:image/jpeg') || imgData.toLowerCase().endsWith('.jpg') || imgData.toLowerCase().endsWith('.jpeg')) {
                 imageFormat = 'JPEG';
             }
+            
             const img = new Image();
             img.src = imgData;
 
             await new Promise((resolve, reject) => {
-                img.onload = resolve;
-                img.onerror = reject;
+                img.onload = () => {
+                    const logoHeight = 15;
+                    const logoWidth = (img.width * logoHeight) / img.height;
+                    doc.addImage(imgData, imageFormat, pageMargin, yPos, logoWidth, logoHeight);
+                    yPos += logoHeight + 5;
+                    resolve(true);
+                };
+                img.onerror = (err) => {
+                     console.error("Failed to load image for PDF:", err);
+                     doc.setFontSize(8);
+                     doc.text(`(${getUIText(UITranslationKeys.PDF_USER_LOGO_ALT, userLang)} - ${getUIText(UITranslationKeys.IMAGE_LABEL, userLang)} error loading)`, pageMargin, yPos + 5);
+                     yPos += 10;
+                     resolve(false); // Resolve even on error to continue PDF generation
+                };
             });
-
-            const logoHeight = 15;
-            const logoWidth = (img.width * logoHeight) / img.height;
-            doc.addImage(imgData, imageFormat, pageMargin, yPos, logoWidth, logoHeight);
-            yPos += logoHeight + 5;
-        } catch (e) {
-            console.error("Failed to add logo to PDF:", e);
+        } catch (e) { // Catch errors from new Image() or if src is invalid before onload/onerror
+            console.error("Error processing image for PDF:", e);
             doc.setFontSize(8);
             doc.text(`(${getUIText(UITranslationKeys.PDF_USER_LOGO_ALT, userLang)} - ${getUIText(UITranslationKeys.IMAGE_LABEL, userLang)} error)`, pageMargin, yPos + 5);
             yPos += 10;
@@ -838,7 +1047,7 @@ const App: React.FC = () => {
       address: currentUser.address,
       email: currentUser.email,
       credits: currentUser.credits,
-      numberOfPersons: 0,
+      numberOfPersons: 0, 
       selectedDishes: [],
       selectedCookingItems: [],
     };
@@ -851,7 +1060,7 @@ const App: React.FC = () => {
   };
 
     const handleExportIngredientsExcel = () => {
-        if (!currentUser || (currentUser.role !== UserRole.SUPREM && currentUser.role !== UserRole.ADMIN)) {
+        if (!currentUser || (currentUser.role !== UserRole.SUPREM)) {
             alert(getUIText(UITranslationKeys.ALERT_PERMISSION_DENIED, currentUser.preferredLanguage));
             return;
         }
@@ -869,7 +1078,6 @@ const App: React.FC = () => {
             return row;
         });
 
-        // Define header order explicitly for consistency
         const headers = ["id", ...SupportedLanguages.map(lang => `name_${lang}`), "imageUrl", "quantity", "unit"];
         const worksheet = XLSX.utils.json_to_sheet(dataToExport, { header: headers });
         const workbook = XLSX.utils.book_new();
@@ -880,7 +1088,7 @@ const App: React.FC = () => {
     };
 
     const handleImportIngredientsExcel = (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (!currentUser || (currentUser.role !== UserRole.SUPREM && currentUser.role !== UserRole.ADMIN)) {
+        if (!currentUser || (currentUser.role !== UserRole.SUPREM)) {
             alert(getUIText(UITranslationKeys.ALERT_PERMISSION_DENIED, currentUser.preferredLanguage));
             return;
         }
@@ -905,19 +1113,17 @@ const App: React.FC = () => {
                 const workbook = XLSX.read(data, { type: 'array' });
                 const sheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[sheetName];
-                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][]; // header:1 gives array of arrays
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][]; 
 
-                if (jsonData.length < 2) { // Must have header + at least one data row
+                if (jsonData.length < 2) { 
                     alert(getUIText(UITranslationKeys.EXCEL_IMPORT_FAILURE_ALERT, currentUser.preferredLanguage) + " (Empty or header-only file)");
                     return;
                 }
 
                 const rawHeaders = jsonData[0].map(h => String(h).trim());
-
                 const expectedBaseHeaders = ["id", "imageUrl", "quantity", "unit"];
                 const expectedNameHeaders = SupportedLanguages.map(lang => `name_${lang}`);
                 const expectedHeaders = [...expectedBaseHeaders.slice(0,1), ...expectedNameHeaders, ...expectedBaseHeaders.slice(1)];
-
 
                 if (rawHeaders.length !== expectedHeaders.length || !expectedHeaders.every(eh => rawHeaders.includes(eh))) {
                      alert(getUIText(UITranslationKeys.EXCEL_HEADER_MISMATCH_ALERT, currentUser.preferredLanguage, Language.EN, {
@@ -926,13 +1132,10 @@ const App: React.FC = () => {
                      }));
                     return;
                 }
-
-                // Create a map of header names to their column index
                 const headerMap: { [key: string]: number } = {};
                 rawHeaders.forEach((header, index) => {
                     headerMap[header] = index;
                 });
-
 
                 let existingIngredients = [...ingredients];
                 let importedCount = 0;
@@ -940,7 +1143,7 @@ const App: React.FC = () => {
 
                 for (let i = 1; i < jsonData.length; i++) {
                     const row = jsonData[i];
-                    if (!row || row.every(cell => cell === null || cell === undefined || String(cell).trim() === '')) continue; // Skip empty rows
+                    if (!row || row.every(cell => cell === null || cell === undefined || String(cell).trim() === '')) continue; 
 
                     const nameLocalized: LocalizedText = {};
                     SupportedLanguages.forEach(lang => {
@@ -996,7 +1199,191 @@ const App: React.FC = () => {
                 console.error("Error parsing Excel:", error);
                 alert(`${getUIText(UITranslationKeys.EXCEL_IMPORT_FAILURE_ALERT, currentUser.preferredLanguage)} See console for details.`);
             } finally {
-                if(importIngredientsInputRef.current) importIngredientsInputRef.current.value = ""; // Reset file input
+                if(importIngredientsInputRef.current) importIngredientsInputRef.current.value = ""; 
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    };
+
+    const handleExportDishesExcel = () => {
+        if (!currentUser || (currentUser.role !== UserRole.SUPREM)) {
+            alert(getUIText(UITranslationKeys.ALERT_PERMISSION_DENIED, currentUser.preferredLanguage));
+            return;
+        }
+
+        const dataToExport = dishes.map(dish => {
+            const row: any = {
+                id: dish.id,
+                imageUrl: dish.imageUrl,
+                ingredients_json: JSON.stringify(dish.ingredients)
+            };
+            SupportedLanguages.forEach(lang => {
+                row[`name_${lang}`] = dish.name[lang] || '';
+                row[`preparationSteps_${lang}`] = dish.preparationSteps[lang] || '';
+            });
+            return row;
+        });
+
+        const headers = ["id", ...SupportedLanguages.map(lang => `name_${lang}`), "imageUrl", ...SupportedLanguages.map(lang => `preparationSteps_${lang}`), "ingredients_json"];
+        const worksheet = XLSX.utils.json_to_sheet(dataToExport, { header: headers });
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Dishes");
+        XLSX.writeFile(workbook, "dishes_export.xlsx");
+
+        alert(getUIText(UITranslationKeys.ALERT_DISHES_EXPORTED_SUCCESS, currentUser.preferredLanguage));
+    };
+
+    const handleImportDishesExcel = (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (!currentUser || (currentUser.role !== UserRole.SUPREM)) {
+            alert(getUIText(UITranslationKeys.ALERT_PERMISSION_DENIED, currentUser.preferredLanguage));
+            return;
+        }
+        const file = event.target.files?.[0];
+        if (!file) {
+            alert(getUIText(UITranslationKeys.EXCEL_NO_FILE_SELECTED_ALERT, currentUser.preferredLanguage));
+            return;
+        }
+        if (!file.name.toLowerCase().endsWith(".xlsx")) {
+             alert(getUIText(UITranslationKeys.EXCEL_INVALID_FILE_FORMAT_ALERT, currentUser.preferredLanguage));
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const data = e.target?.result;
+            if (!data) {
+                alert(getUIText(UITranslationKeys.EXCEL_IMPORT_FAILURE_ALERT, currentUser.preferredLanguage));
+                return;
+            }
+            try {
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][]; 
+
+                if (jsonData.length < 2) { 
+                    alert(getUIText(UITranslationKeys.EXCEL_IMPORT_FAILURE_ALERT, currentUser.preferredLanguage) + " (Empty or header-only file)");
+                    return;
+                }
+
+                const rawHeaders = jsonData[0].map(h => String(h).trim());
+                const expectedBaseHeaders = ["id", "imageUrl", "ingredients_json"];
+                const expectedNameHeaders = SupportedLanguages.map(lang => `name_${lang}`);
+                const expectedPrepStepsHeaders = SupportedLanguages.map(lang => `preparationSteps_${lang}`);
+                const expectedHeaders = [
+                    expectedBaseHeaders[0], 
+                    ...expectedNameHeaders, 
+                    expectedBaseHeaders[1], 
+                    ...expectedPrepStepsHeaders, 
+                    expectedBaseHeaders[2]
+                ];
+
+
+                if (rawHeaders.length !== expectedHeaders.length || !expectedHeaders.every(eh => rawHeaders.includes(eh))) {
+                     alert(getUIText(UITranslationKeys.EXCEL_HEADER_MISMATCH_ALERT, currentUser.preferredLanguage, Language.EN, {
+                        expectedHeaders: expectedHeaders.join(', '),
+                        actualHeaders: rawHeaders.join(', ')
+                     }));
+                    return;
+                }
+                const headerMap: { [key: string]: number } = {};
+                rawHeaders.forEach((header, index) => {
+                    headerMap[header] = index;
+                });
+
+                let existingDishes = [...dishes];
+                let importedCount = 0;
+                let updatedCount = 0;
+                let errorOccurred = false;
+
+                for (let i = 1; i < jsonData.length; i++) {
+                    const row = jsonData[i];
+                    if (!row || row.every(cell => cell === null || cell === undefined || String(cell).trim() === '')) continue; 
+
+                    const nameLocalized: LocalizedText = {};
+                    SupportedLanguages.forEach(lang => {
+                        const langKey = `name_${lang}`;
+                        if (row[headerMap[langKey]] !== undefined && String(row[headerMap[langKey]]).trim() !== '') {
+                             nameLocalized[lang] = String(row[headerMap[langKey]]).trim();
+                        }
+                    });
+
+                    const prepStepsLocalized: LocalizedText = {};
+                    SupportedLanguages.forEach(lang => {
+                        const langKey = `preparationSteps_${lang}`;
+                        if (row[headerMap[langKey]] !== undefined && String(row[headerMap[langKey]]).trim() !== '') {
+                             prepStepsLocalized[lang] = String(row[headerMap[langKey]]).trim();
+                        }
+                    });
+                    
+                    if (Object.keys(nameLocalized).length === 0) {
+                        console.warn(`Skipping dish in row ${i+1} as no name provided in any language.`);
+                        continue;
+                    }
+                    
+                    const dishNameForAlert = getTranslatedText(nameLocalized, Language.EN) || `Row ${i+1}`;
+
+                    let dishIngredients: DishIngredient[] = [];
+                    const ingredientsJsonString = String(row[headerMap.ingredients_json] || '[]').trim();
+                    try {
+                        const parsedIngredients = JSON.parse(ingredientsJsonString);
+                        if (Array.isArray(parsedIngredients)) {
+                            for (const ing of parsedIngredients) {
+                                if (typeof ing.ingredientId !== 'string' || !ingredients.find(masterIng => masterIng.id === ing.ingredientId)) {
+                                    alert(getUIText(UITranslationKeys.EXCEL_DISH_IMPORT_INVALID_INGREDIENT_ID, currentUser.preferredLanguage, Language.EN, { ingredientId: ing.ingredientId || 'N/A', dishName: dishNameForAlert }));
+                                    throw new Error("Invalid ingredient ID");
+                                }
+                                const quantity = parseFloat(ing.quantity);
+                                if (isNaN(quantity) || quantity <= 0) {
+                                     alert(getUIText(UITranslationKeys.EXCEL_DISH_IMPORT_INVALID_INGREDIENT_QUANTITY, currentUser.preferredLanguage, Language.EN, { ingredientId: ing.ingredientId, dishName: dishNameForAlert }));
+                                    throw new Error("Invalid ingredient quantity");
+                                }
+                                dishIngredients.push({ ingredientId: ing.ingredientId, quantity });
+                            }
+                        } else {
+                            throw new Error("Ingredients JSON is not an array");
+                        }
+                    } catch (jsonError: any) {
+                         alert(getUIText(UITranslationKeys.EXCEL_DISH_IMPORT_INVALID_INGREDIENTS_JSON, currentUser.preferredLanguage, Language.EN, { dishName: dishNameForAlert, error: jsonError.message }));
+                        console.error(`Error parsing ingredients JSON for dish "${dishNameForAlert}" (Row ${i+1}):`, jsonError);
+                        errorOccurred = true;
+                        continue; 
+                    }
+
+
+                    const idVal = row[headerMap.id] !== undefined ? String(row[headerMap.id]).trim() : generateId();
+                    const imageUrlVal = row[headerMap.imageUrl] !== undefined ? String(row[headerMap.imageUrl]).trim() : '';
+
+                    const dishEntry: Dish = {
+                        id: idVal,
+                        name: nameLocalized,
+                        imageUrl: imageUrlVal || placeholderImage(DEFAULT_IMAGE_SIZE, DEFAULT_IMAGE_SIZE, getTranslatedText(nameLocalized, Language.EN) || 'imported_dish'),
+                        ingredients: dishIngredients,
+                        preparationSteps: prepStepsLocalized,
+                    };
+
+                    const existingIndex = existingDishes.findIndex(d => d.id === dishEntry.id);
+                    if (existingIndex !== -1) {
+                        existingDishes[existingIndex] = dishEntry;
+                        updatedCount++;
+                    } else {
+                        existingDishes.push(dishEntry);
+                        importedCount++;
+                    }
+                }
+                setDishes(existingDishes);
+                 if (!errorOccurred) {
+                    alert(`${getUIText(UITranslationKeys.ALERT_DISHES_IMPORTED_SUCCESS, currentUser.preferredLanguage)} Imported: ${importedCount}, Updated: ${updatedCount}`);
+                } else {
+                    alert(`Dishes import process completed with some errors. Imported: ${importedCount}, Updated: ${updatedCount}. Please check console for details of skipped rows.`);
+                }
+
+
+            } catch (error) {
+                console.error("Error parsing Dishes Excel:", error);
+                alert(`${getUIText(UITranslationKeys.EXCEL_IMPORT_FAILURE_ALERT, currentUser.preferredLanguage)} See console for details.`);
+            } finally {
+                if(importDishesInputRef.current) importDishesInputRef.current.value = ""; 
             }
         };
         reader.readAsArrayBuffer(file);
@@ -1008,14 +1395,14 @@ const App: React.FC = () => {
       <img src={ingredient.imageUrl || placeholderImage(DEFAULT_IMAGE_SIZE, DEFAULT_IMAGE_SIZE, getTranslatedText(ingredient.name, currentUser!.preferredLanguage))} alt={getTranslatedText(ingredient.name, currentUser!.preferredLanguage)} className="w-full h-32 object-cover rounded-md mb-3" />
       <h3 className="text-xl font-semibold text-slate-700 mb-1">{getTranslatedText(ingredient.name, currentUser!.preferredLanguage)}</h3>
       <p className="text-sm text-slate-600 mb-3">Quantity: {ingredient.quantity} {ingredient.unit}</p>
-      { (canPerformAction('edit', 'ingredient') || canPerformAction('delete', 'ingredient')) && (
+      { (canPerformAction('edit', 'ingredient', ingredient) || canPerformAction('delete', 'ingredient', ingredient)) && (
         <div className="flex space-x-2">
-            {canPerformAction('edit', 'ingredient') &&
+            {canPerformAction('edit', 'ingredient', ingredient) &&
               <button onClick={() => openModal('ingredient', ingredient)} className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded-md text-sm flex items-center justify-center transition-colors">
                   <PencilIcon className="w-4 h-4 mr-1" /> Edit
               </button>
             }
-            {canPerformAction('delete', 'ingredient') &&
+            {canPerformAction('delete', 'ingredient', ingredient) &&
               <button onClick={() => handleDeleteIngredient(ingredient.id)} className="flex-1 bg-red-500 hover:bg-red-600 text-white p-2 rounded-md text-sm flex items-center justify-center transition-colors">
                   <TrashIcon className="w-4 h-4 mr-1" /> Delete
               </button>
@@ -1041,14 +1428,14 @@ const App: React.FC = () => {
               {getTranslatedText(dish.preparationSteps, currentUser!.preferredLanguage) || 'No preparation steps provided.'}
           </div>
       </details>
-       { (canPerformAction('edit', 'dish') || canPerformAction('delete', 'dish')) && (
+       { (canPerformAction('edit', 'dish', dish) || canPerformAction('delete', 'dish', dish)) && (
         <div className="flex space-x-2">
-            {canPerformAction('edit', 'dish') &&
+            {canPerformAction('edit', 'dish', dish) &&
               <button onClick={() => openModal('dish', dish)} className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded-md text-sm flex items-center justify-center transition-colors">
                   <PencilIcon className="w-4 h-4 mr-1" /> Edit
               </button>
             }
-            {canPerformAction('delete', 'dish') &&
+            {canPerformAction('delete', 'dish', dish) &&
               <button onClick={() => handleDeleteDish(dish.id)} className="flex-1 bg-red-500 hover:bg-red-600 text-white p-2 rounded-md text-sm flex items-center justify-center transition-colors">
                   <TrashIcon className="w-4 h-4 mr-1" /> Delete
               </button>
@@ -1064,14 +1451,14 @@ const App: React.FC = () => {
       <h3 className="text-xl font-semibold text-slate-700 mb-1">{getTranslatedText(item.name, currentUser!.preferredLanguage)}</h3>
       <p className="text-sm text-slate-600 mb-1">Unit: {item.unit}</p>
       <p className="text-xs text-slate-500 mb-2 truncate" title={getTranslatedText(item.summary, currentUser!.preferredLanguage)}>Summary: {getTranslatedText(item.summary, currentUser!.preferredLanguage)}</p>
-      { (canPerformAction('edit', 'cookingItem') || canPerformAction('delete', 'cookingItem')) && (
+      { (canPerformAction('edit', 'cookingItem', item) || canPerformAction('delete', 'cookingItem', item)) && (
         <div className="flex space-x-2">
-            {canPerformAction('edit', 'cookingItem') &&
+            {canPerformAction('edit', 'cookingItem', item) &&
               <button onClick={() => openModal('cookingItem', item)} className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded-md text-sm flex items-center justify-center transition-colors">
                   <PencilIcon className="w-4 h-4 mr-1" /> Edit
               </button>
             }
-            {canPerformAction('delete', 'cookingItem') &&
+            {canPerformAction('delete', 'cookingItem', item) &&
               <button onClick={() => handleDeleteCookingItem(item.id)} className="flex-1 bg-red-500 hover:bg-red-600 text-white p-2 rounded-md text-sm flex items-center justify-center transition-colors">
                   <TrashIcon className="w-4 h-4 mr-1" /> Delete
               </button>
@@ -1096,6 +1483,7 @@ const App: React.FC = () => {
 
     const canEditThisCustomer = canPerformAction('edit', 'customer', customer);
     const canDeleteThisCustomer = canPerformAction('delete', 'customer', customer);
+    const itemPermissionContext = { customerUserId: customer.userId }; 
 
     return (
         <div key={customer.id} className="bg-slate-50 p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-slate-200 flex flex-col justify-between">
@@ -1107,20 +1495,53 @@ const App: React.FC = () => {
             <p className="text-sm text-slate-600 mb-1">Persons: {customer.numberOfPersons}</p>
             <p className="text-xs text-slate-500 mb-1 truncate" title={dishNames}>Selected Dishes: {dishNames}</p>
             <p className="text-xs text-slate-500 mb-2 truncate" title={cookingItemNames}>Cooking Items: {cookingItemNames}</p>
+            
             {customer.generatedOrder && (
             <details className="text-xs bg-sky-50 p-2 rounded-md mb-2">
                 <summary className="cursor-pointer font-medium text-sky-700">View Generated Order Details</summary>
-                <div className="mt-2 space-y-1">
-                <p className="font-semibold">Ingredients Needed:</p>
-                {customer.generatedOrder.cumulativeIngredients.length > 0 ?
-                    customer.generatedOrder.cumulativeIngredients.map((ing, idx) => (
-                    <p key={idx}>- {ing.name}: {ing.totalQuantity.toFixed(2)} {ing.unit}</p>
-                    )) : <p>(None)</p>}
-                <p className="font-semibold mt-1">Cooking Items Added:</p>
-                {customer.generatedOrder.selectedCookingItems.length > 0 ?
-                    customer.generatedOrder.selectedCookingItems.map((item, idx) => (
-                    <p key={idx}>- {item.name}: {item.quantity} {item.unit}</p>
-                    )) : <p>(None)</p>}
+                <div className="mt-2 space-y-2">
+                    <p className="font-semibold">Ingredients Needed:</p>
+                    {customer.generatedOrder.cumulativeIngredients.length > 0 ? (
+                        <ul className="list-disc list-inside space-y-1 pl-1">
+                            {customer.generatedOrder.cumulativeIngredients.map((ing) => (
+                                <li key={ing.id} className="flex justify-between items-center">
+                                    <span>{ing.name}: {ing.totalQuantity.toFixed(2)} {ing.unit}</span>
+                                    { (canPerformAction('edit', 'orderIngredient', itemPermissionContext) || canPerformAction('delete', 'orderIngredient', itemPermissionContext)) && (
+                                        <div className="space-x-1">
+                                            {canPerformAction('edit', 'orderIngredient', itemPermissionContext) &&
+                                              <button onClick={() => handleOpenEditOrderIngredientModal(customer.id, ing.id)} className="p-1 text-yellow-600 hover:text-yellow-700" title="Edit Ingredient">
+                                                  <PencilIcon className="w-3.5 h-3.5" />
+                                              </button>
+                                            }
+                                            {canPerformAction('delete', 'orderIngredient', itemPermissionContext) &&
+                                              <button onClick={() => handleDeleteOrderIngredient(customer.id, ing.id)} className="p-1 text-red-600 hover:text-red-700" title="Delete Ingredient">
+                                                  <TrashIcon className="w-3.5 h-3.5" />
+                                              </button>
+                                            }
+                                        </div>
+                                     )}
+                                </li>
+                            ))}
+                        </ul>
+                    ) : <p className="pl-1">(None)</p>}
+
+                    {canPerformAction('add', 'orderIngredient', itemPermissionContext) && (
+                        <button
+                            onClick={() => handleOpenAddOrderIngredientModal(customer.id)}
+                            className="mt-2 text-xs bg-green-100 hover:bg-green-200 text-green-700 px-2 py-1 rounded flex items-center"
+                        >
+                            <PlusIcon className="w-3 h-3 mr-1" /> {getUIText(UITranslationKeys.ADD_INGREDIENT_TO_ORDER_BUTTON, userLang)}
+                        </button>
+                    )}
+
+                    <p className="font-semibold mt-1">Cooking Items Added:</p>
+                    {customer.generatedOrder.selectedCookingItems.length > 0 ? (
+                        <ul className="list-disc list-inside space-y-1 pl-1">
+                            {customer.generatedOrder.selectedCookingItems.map((item, idx) => (
+                                <li key={idx}>{item.name}: {item.quantity} {item.unit}</li>
+                            ))}
+                        </ul>
+                    ) : <p className="pl-1">(None)</p>}
                 </div>
             </details>
             )}
@@ -1172,11 +1593,10 @@ const App: React.FC = () => {
             }
             return null;
         }
-        if (modalType && (!currentUser && (modalType === 'profile' || modalType === 'customer' || modalType === 'dish' || modalType === 'ingredient' || modalType === 'cookingItem'))){
+        if (modalType && (!currentUser && (modalType === 'profile' || modalType === 'customer' || modalType === 'dish' || modalType === 'ingredient' || modalType === 'cookingItem' || modalType === 'orderIngredient'))){
              closeModal();
              return null;
         }
-
 
         switch(modalType) {
             case 'ingredient':
@@ -1234,6 +1654,16 @@ const App: React.FC = () => {
                     generateId={generateId}
                     currentUserPreferredLanguage={currentUser.preferredLanguage}
                 />;
+            case 'orderIngredient':
+                if (!editingOrderContext || !currentUser) return null;
+                return <OrderIngredientForm
+                            onSave={handleSaveOrderIngredient}
+                            onCancel={closeModal}
+                            context={editingOrderContext}
+                            masterIngredients={ingredients}
+                            ingredientUnits={IngredientUnits}
+                            currentUserPreferredLanguage={currentUser.preferredLanguage}
+                        />;
             default: return null;
         }
     };
@@ -1251,7 +1681,7 @@ const App: React.FC = () => {
         switch(currentPage) {
             case Page.Ingredients:
                 pageTitle = getUIText(UITranslationKeys.INGREDIENTS_PAGE_TITLE, currentUser.preferredLanguage);
-                if (currentUser.role === UserRole.SUPREM || currentUser.role === UserRole.ADMIN) { // Admin can still export/import
+                if (currentUser.role === UserRole.SUPREM) { 
                     extraCrudHeaderContent = (
                         <div className="flex space-x-2">
                              <input
@@ -1278,10 +1708,38 @@ const App: React.FC = () => {
                     );
                 }
                 break;
+            case Page.Dishes: 
+                pageTitle = getUIText(UITranslationKeys.DISHES_PAGE_TITLE, currentUser.preferredLanguage);
+                if (currentUser.role === UserRole.SUPREM) { 
+                    extraCrudHeaderContent = (
+                        <div className="flex space-x-2">
+                             <input
+                                type="file"
+                                accept=".xlsx"
+                                onChange={handleImportDishesExcel}
+                                className="hidden"
+                                id="excel-dish-import-input"
+                                ref={importDishesInputRef}
+                            />
+                            <label
+                                htmlFor="excel-dish-import-input"
+                                className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-3 rounded-lg shadow hover:shadow-md transition-all text-sm flex items-center cursor-pointer"
+                            >
+                                <ArrowUpTrayIcon className="w-4 h-4 mr-1" /> {getUIText(UITranslationKeys.EXCEL_IMPORT_DISHES_BUTTON, currentUser.preferredLanguage)}
+                            </label>
+                            <button
+                                onClick={handleExportDishesExcel}
+                                className="bg-teal-500 hover:bg-teal-600 text-white font-semibold py-2 px-3 rounded-lg shadow hover:shadow-md transition-all text-sm flex items-center"
+                            >
+                               <ArrowDownTrayIcon className="w-4 h-4 mr-1" /> {getUIText(UITranslationKeys.EXCEL_EXPORT_DISHES_BUTTON, currentUser.preferredLanguage)}
+                            </button>
+                        </div>
+                    );
+                }
+                break;
             case Page.CookingItems:
                 pageTitle = getUIText(UITranslationKeys.COOKING_ITEMS_PAGE_TITLE, currentUser.preferredLanguage);
                 break;
-            case Page.Dishes: pageTitle = 'Dishes'; break;
             case Page.Customers: pageTitle = 'Customer Orders'; break;
         }
     }
@@ -1344,7 +1802,7 @@ const App: React.FC = () => {
                             </button>
                         )}
 
-                        {canPerformAction('add', 'customer') && (
+                        {canPerformAction('add', 'customer', null) && (
                             <button
                                 onClick={() => openModal('customer', null)}
                                 className="bg-slate-100 hover:bg-slate-200 p-6 rounded-lg shadow-md hover:shadow-lg transition-all text-left flex items-center"
@@ -1371,7 +1829,7 @@ const App: React.FC = () => {
                         renderItem={renderIngredientItem}
                         onAdd={() => openModal('ingredient')}
                         entityType="ingredient"
-                        canAdd={canPerformAction('add', 'ingredient')}
+                        canAdd={canPerformAction('add', 'ingredient', null)}
                         searchTerm={searchTerm}
                         onSearchTermChange={setSearchTerm}
                         currentUserPreferredLanguage={currentUser.preferredLanguage}
@@ -1382,16 +1840,17 @@ const App: React.FC = () => {
             if (!currentUser || (currentUser.role !== UserRole.SUPREM && currentUser.role !== UserRole.ADMIN)) return <p className="text-center text-red-500">You do not have access to this page.</p>;
             const filteredDishes = dishes.filter(item => getTranslatedText(item.name, currentUser.preferredLanguage).toLowerCase().includes(searchTerm.toLowerCase()));
             return <CrudSection
-                        title="Dishes"
+                        title={pageTitle}
                         items={filteredDishes}
                         renderItem={renderDishItem}
                         onAdd={() => openModal('dish')}
                         entityType="dish"
-                        canAdd={canPerformAction('add', 'dish')}
+                        canAdd={canPerformAction('add', 'dish', null)}
                         searchTerm={searchTerm}
                         onSearchTermChange={setSearchTerm}
                         currentUserPreferredLanguage={currentUser.preferredLanguage}
                         hasItems={dishes.length > 0}
+                        extraHeaderContent={extraCrudHeaderContent}
                     />;
         case Page.CookingItems:
              if (!currentUser || (currentUser.role !== UserRole.SUPREM && currentUser.role !== UserRole.ADMIN)) return <p className="text-center text-red-500">You do not have access to this page.</p>;
@@ -1405,7 +1864,7 @@ const App: React.FC = () => {
                         renderItem={renderCookingItem}
                         onAdd={() => openModal('cookingItem')}
                         entityType="cookingItem"
-                        canAdd={canPerformAction('add', 'cookingItem')}
+                        canAdd={canPerformAction('add', 'cookingItem', null)}
                         searchTerm={searchTerm}
                         onSearchTermChange={setSearchTerm}
                         currentUserPreferredLanguage={currentUser.preferredLanguage}
@@ -1426,7 +1885,7 @@ const App: React.FC = () => {
                         renderItem={renderCustomerItem}
                         onAdd={() => openModal('customer')}
                         entityType="customer"
-                        canAdd={canPerformAction('add', 'customer')}
+                        canAdd={canPerformAction('add', 'customer', null)}
                         searchTerm={searchTerm}
                         onSearchTermChange={setSearchTerm}
                         currentUserPreferredLanguage={currentUser.preferredLanguage}

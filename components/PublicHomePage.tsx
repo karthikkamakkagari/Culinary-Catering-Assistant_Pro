@@ -144,8 +144,8 @@ const PublicHomePage: React.FC<PublicHomePageProps> = ({ onNavigate }) => {
             (Contact form functionality is a future enhancement.)
           </p>
           <div className="bg-white p-8 rounded-lg shadow-xl inline-block">
-            <p className="text-slate-700 font-medium">Email: <a href="mailto:support@culinaryassistant.pro" className="text-blue-600 hover:underline">support@culinaryassistant.pro</a></p>
-            <p className="text-slate-700 font-medium mt-2">Phone: <span className="text-blue-600">(123) 456-7890</span> (Placeholder)</p>
+            <p className="text-slate-700 font-medium">Email: <a href="mailto:karthikraj21011992@gmail.com" className="text-blue-600 hover:underline">karthikraj21011992@gmail.com</a></p>
+            <p className="text-slate-700 font-medium mt-2">Phone: <span className="text-blue-600">+918897497962</span> (Placeholder)</p>
           </div>
         </div>
       </section>

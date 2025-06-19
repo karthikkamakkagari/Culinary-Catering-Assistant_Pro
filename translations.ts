@@ -87,6 +87,56 @@ export const uiTranslations: { [key in UITranslationKeys]: LocalizedText } = {
     [Language.KN]: 'ಘಟಕ',
     [Language.HI]: 'इकाई'
   },
+  // Dishes
+  [UITranslationKeys.DISHES_PAGE_TITLE]: {
+    [Language.EN]: 'Dishes',
+    [Language.TE]: 'వంటకాలు',
+    [Language.TA]: 'உணவுகள்',
+    [Language.KN]: 'ಭಕ್ಷ್ಯಗಳು',
+    [Language.HI]: 'व्यंजन'
+  },
+  [UITranslationKeys.ADD_DISH_TITLE]: {
+    [Language.EN]: 'Add Dish',
+    [Language.TE]: 'వంటకాన్ని జోడించండి',
+    [Language.TA]: 'உணவைச் சேர்',
+    [Language.KN]: 'ಭಕ್ಷ್ಯವನ್ನು ಸೇರಿಸಿ',
+    [Language.HI]: 'व्यंजन जोड़ें'
+  },
+  [UITranslationKeys.EDIT_DISH_TITLE]: {
+    [Language.EN]: 'Edit Dish',
+    [Language.TE]: 'వంటకాన్ని సవరించండి',
+    [Language.TA]: 'உணவைத் திருத்து',
+    [Language.KN]: 'ಭಕ್ಷ್ಯವನ್ನು ಸಂಪಾದಿಸಿ',
+    [Language.HI]: 'व्यंजन संपादित करें'
+  },
+  [UITranslationKeys.DISH_NAME_LABEL]: {
+    [Language.EN]: 'Dish Name',
+    [Language.TE]: 'వంటకం పేరు',
+    [Language.TA]: 'உணவு பெயர்',
+    [Language.KN]: 'ಭಕ್ಷ್ಯದ ಹೆಸರು',
+    [Language.HI]: 'व्यंजन का नाम'
+  },
+  [UITranslationKeys.PREPARATION_STEPS_LABEL]: {
+    [Language.EN]: 'Preparation Steps',
+    [Language.TE]: 'తయారీ దశలు',
+    [Language.TA]: 'தயாரிப்பு படிகள்',
+    [Language.KN]: 'ತಯಾರಿಕೆಯ ಹಂತಗಳು',
+    [Language.HI]: 'तैयारी के चरण'
+  },
+  [UITranslationKeys.SELECT_INGREDIENTS_LABEL]: {
+    [Language.EN]: 'Select Ingredients',
+    [Language.TE]: 'పదార్థాలను ఎంచుకోండి',
+    [Language.TA]: 'பொருட்களைத் தேர்ந்தெடுக்கவும்',
+    [Language.KN]: 'ಪದಾರ್ಥಗಳನ್ನು ಆಯ್ಕೆಮಾಡಿ',
+    [Language.HI]: 'सामग्री चुनें'
+  },
+  [UITranslationKeys.NO_INGREDIENTS_AVAILABLE]: {
+    [Language.EN]: 'No ingredients available. Please add some first.',
+    [Language.TE]: 'పదార్థాలు అందుబాటులో లేవు. దయచేసి ముందుగా కొన్ని జోడించండి.',
+    [Language.TA]: 'பொருட்கள் எதுவும் கிடைக்கவில்லை. முதலில் சிலவற்றைச் சேர்க்கவும்.',
+    [Language.KN]: 'ಯಾವುದೇ ಪದಾರ್ಥಗಳು ಲಭ್ಯವಿಲ್ಲ. ದಯವಿಟ್ಟು ಮೊದಲು ಕೆಲವನ್ನು ಸೇರಿಸಿ.',
+    [Language.HI]: 'कोई सामग्री उपलब्ध नहीं है। कृपया पहले कुछ जोड़ें।'
+  },
   // Cooking Items
   [UITranslationKeys.COOKING_ITEMS_PAGE_TITLE]: {
     [Language.EN]: 'Cooking Items',
@@ -140,7 +190,7 @@ export const uiTranslations: { [key in UITranslationKeys]: LocalizedText } = {
   [UITranslationKeys.PDF_SELECTED_COOKING_ITEMS_TITLE]: { en: 'Selected Cooking Items', te: 'ఎంచుకున్న వంట సామాగ్రి', ta: 'தேர்ந்தெடுக்கப்பட்ட சமையல் பொருட்கள்', kn: 'ಆಯ್ದ ಅಡುಗೆ ಸಾಮಗ್ರಿಗಳು', hi: 'चयनित खाना पकाने की सामग्री' },
   [UITranslationKeys.PDF_COOKING_ITEMS_TABLE_HEADER_NAME]: { en: 'Item', te: 'వస్తువు', ta: 'பொருள்', kn: 'ವಸ್ತು', hi: 'वस्तु' },
   [UITranslationKeys.PDF_COOKING_ITEMS_TABLE_HEADER_QUANTITY]: { en: 'Quantity', te: 'పరిమాణం', ta: 'அளவு', kn: 'ಪ್ರಮಾಣ', hi: 'मात्रा' },
-  [UITranslationKeys.PDF_COOKING_ITEMS_TABLE_HEADER_UNIT]: { en: 'Unit', te: 'యూనిట్', ta: 'అలகு', kn: 'ಘಟಕ', hi: 'इकाई' },
+  [UITranslationKeys.PDF_COOKING_ITEMS_TABLE_HEADER_UNIT]: { en: 'Unit', te: 'యూనిట్', ta: 'அலகு', kn: 'ಘಟಕ', hi: 'इकाई' },
   [UITranslationKeys.PDF_NO_COOKING_ITEMS_SELECTED]: { en: '(No cooking items selected)', te: '(వంట సామాగ్రి ఏవీ ఎంచుకోబడలేదు)', ta: '(சமையல் பொருட்கள் எதுவும் தேர்ந்தெடுக்கப்படவில்லை)', kn: '(ಯಾವುದೇ ಅಡುಗೆ ಸಾಮಾನುಗಳನ್ನು ಆಯ್ಕೆ ಮಾಡಲಾಗಿಲ್ಲ)', hi: '(कोई खाना पकाने की सामग्री चयनित नहीं)' },
   [UITranslationKeys.PDF_THANK_YOU_MESSAGE]: { en: 'Thank you for your order!', te: 'మీ ఆర్డర్‌కు ధన్యవాదాలు!', ta: 'உங்கள் ஆர்டருக்கு நன்றி!', kn: 'ನಿಮ್ಮ ಆರ್ಡರ್‌ಗಾಗಿ ಧನ್ಯವಾದಗಳು!', hi: 'आपके आदेश के लिए धन्यवाद!' },
   [UITranslationKeys.PDF_PREPARED_BY_LABEL]: { en: 'Prepared By:', te: 'తయారుచేసిన వారు:', ta: 'தயாரித்தவர்:', kn: 'ತಯಾರಿಸಿದವರು:', hi: 'द्वारा तैयार:' },
@@ -152,21 +202,51 @@ export const uiTranslations: { [key in UITranslationKeys]: LocalizedText } = {
   [UITranslationKeys.PDF_OF_LABEL]: { en: 'of', te: 'లో', ta: 'இல்', kn: 'ನ', hi: 'का' },
 
   // Excel related
-  [UITranslationKeys.EXCEL_EXPORT_INGREDIENTS_BUTTON]: { en: 'Export Excel', te: 'Excel ఎగుమతి చేయండి', ta: 'Excel ஏற்றுமதி செய்', kn: 'Excel ರಫ್ತು ಮಾಡಿ', hi: 'एक्सेल निर्यात करें' },
-  [UITranslationKeys.EXCEL_IMPORT_INGREDIENTS_BUTTON]: { en: 'Import Excel', te: 'Excel దిగుమతి చేయండి', ta: 'Excel இறக்குமதி செய்', kn: 'Excel ಆಮದು ಮಾಡಿ', hi: 'एक्सेल आयात करें' },
-  [UITranslationKeys.EXCEL_IMPORT_SUCCESS_ALERT]: { en: 'Ingredients imported/updated successfully from Excel!', te: 'Excel నుండి పదార్థాలు విజయవంతంగా దిగుమతి/నవీకరించబడ్డాయి!', ta: 'Excel இலிருந்து பொருட்கள் வெற்றிகரமாக இறக்குமதி/புதுப்பிக்கப்பட்டன!', kn: 'Excel ಯಿಂದ ಪದಾರ್ಥಗಳನ್ನು ಯಶಸ್ವಿಯಾಗಿ ಆಮದು/ನವೀಕರಿಸಲಾಗಿದೆ!', hi: 'एक्सेल से सामग्री सफलतापूर्वक आयात/अद्यतन की गई!' },
+  [UITranslationKeys.EXCEL_EXPORT_INGREDIENTS_BUTTON]: { en: 'Export Ingredients', te: 'పదార్థాలను Excel ఎగుమతి చేయండి', ta: 'பொருட்களை Excel ஏற்றுமதி செய்', kn: 'ಪದಾರ್ಥಗಳನ್ನು Excel ರಫ್ತು ಮಾಡಿ', hi: 'सामग्री एक्सेल निर्यात करें' },
+  [UITranslationKeys.EXCEL_IMPORT_INGREDIENTS_BUTTON]: { en: 'Import Ingredients', te: 'పదార్థాలను Excel దిగుమతి చేయండి', ta: 'பொருட்களை Excel இறக்குமதி செய்', kn: 'ಪದಾರ್ಥಗಳನ್ನು Excel ಆಮದು ಮಾಡಿ', hi: 'सामग्री एक्सेल आयात करें' },
+  [UITranslationKeys.EXCEL_IMPORT_SUCCESS_ALERT]: { en: 'Data imported/updated successfully from Excel!', te: 'Excel నుండి డేటా విజయవంతంగా దిగుమతి/నవీకరించబడింది!', ta: 'Excel இலிருந்து தரவு வெற்றிகரமாக இறக்குமதி/புதுப்பிக்கப்பட்டது!', kn: 'Excel ನಿಂದ ಡೇಟಾವನ್ನು ಯಶಸ್ವಿಯಾಗಿ ಆಮದು/ನವೀಕರಿಸಲಾಗಿದೆ!', hi: 'एक्सेल से डेटा सफलतापूर्वक आयात/अद्यतन किया गया!' },
   [UITranslationKeys.EXCEL_IMPORT_FAILURE_ALERT]: { en: 'Failed to process Excel file.', te: 'Excel ఫైల్‌ను ప్రాసెస్ చేయడంలో విఫలమైంది.', ta: 'Excel கோப்பைச் செயலாக்குவதில் தோல்வி.', kn: 'Excel ಫೈಲ್ ಅನ್ನು ಪ್ರಕ್ರಿಯೆಗೊಳಿಸಲು ವಿಫಲವಾಗಿದೆ.', hi: 'एक्सेल फ़ाइल को संसाधित करने में विफल।' },
   [UITranslationKeys.EXCEL_INVALID_FILE_FORMAT_ALERT]: { en: 'Invalid file format. Please upload an Excel (.xlsx) file.', te: 'చెల్లని ఫైల్ ఫార్మాట్. దయచేసి Excel (.xlsx) ఫైల్‌ను అప్‌లోడ్ చేయండి.', ta: 'தவறான கோப்பு வடிவம். Excel (.xlsx) கோப்பைப் பதிவேற்றவும்.', kn: 'ಅಮಾನ್ಯ ಫೈಲ್ ಫಾರ್ಮ್ಯಾಟ್. ದಯವಿಟ್ಟು Excel (.xlsx) ಫೈಲ್ ಅನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ.', hi: 'अमान्य फ़ाइल स्वरूप। कृपया एक एक्सेल (.xlsx) फ़ाइल अपलोड करें।' },
   [UITranslationKeys.EXCEL_NO_FILE_SELECTED_ALERT]: { en: 'No file selected. Please choose an Excel file to import.', te: 'ఫైల్ ఏదీ ఎంచుకోబడలేదు. దయచేసి దిగుమతి చేయడానికి Excel ఫైల్‌ను ఎంచుకోండి.', ta: 'கோப்பு எதுவும் தேர்ந்தெடுக்கப்படவில்லை. இறக்குமதி செய்ய Excel கோப்பைத் தேர்ந்தெடுக்கவும்.', kn: 'ಯಾವುದೇ ಫೈಲ್ ಆಯ್ಕೆ ಮಾಡಲಾಗಿಲ್ಲ. ದಯವಿಟ್ಟು ಆಮದು ಮಾಡಲು Excel ಫೈಲ್ ಆಯ್ಕೆಮಾಡಿ.', hi: 'कोई फ़ाइल चयनित नहीं है। कृपया आयात करने के लिए एक एक्सेल फ़ाइल चुनें।' },
   [UITranslationKeys.EXCEL_HEADER_MISMATCH_ALERT]: { en: 'Excel header mismatch. Expected headers: {expectedHeaders}. Actual headers: {actualHeaders}', te: 'Excel హెడర్ సరిపోలడం లేదు. ఆశించిన హెడర్‌లు: {expectedHeaders}. వాస్తవ హెడర్‌లు: {actualHeaders}', ta: 'Excel தலைப்பு பொருந்தவில்லை. எதிர்பார்க்கப்படும் தலைப்புகள்: {expectedHeaders}. உண்மையான தலைப்புகள்: {actualHeaders}', kn: 'Excel ಹೆಡರ್ ಹೊಂದಾಣಿಕೆಯಾಗುತ್ತಿಲ್ಲ. ನಿರೀಕ್ಷಿತ ಹೆಡರ್‌ಗಳು: {expectedHeaders}. ನಿಜವಾದ ಹೆಡರ್‌ಗಳು: {actualHeaders}', hi: 'एक्सेल हेडर बेमेल। अपेक्षित हेडर: {expectedHeaders}। वास्तविक हेडर: {actualHeaders}' },
-  
+  [UITranslationKeys.EXCEL_EXPORT_DISHES_BUTTON]: { en: 'Export Dishes', te: 'వంటకాలను Excel ఎగుమతి చేయండి', ta: 'உணவுகளை Excel ஏற்றுமதி செய்', kn: 'ಭಕ್ಷ್ಯಗಳನ್ನು Excel ರಫ್ತು ಮಾಡಿ', hi: 'व्यंजन एक्सेल निर्यात करें' },
+  [UITranslationKeys.EXCEL_IMPORT_DISHES_BUTTON]: { en: 'Import Dishes', te: 'వంటకాలను Excel దిగుమతి చేయండి', ta: 'உணவுகளை Excel இறக்குமதி செய்', kn: 'ಭಕ್ಷ್ಯಗಳನ್ನು Excel ಆಮದು ಮಾಡಿ', hi: 'व्यंजन एक्सेल आयात करें' },
+  [UITranslationKeys.ALERT_DISHES_EXPORTED_SUCCESS]: { en: 'Dishes exported successfully to Excel!', te: 'వంటకాలు Excelకి విజయవంతంగా ఎగుమతి చేయబడ్డాయి!', ta: 'உணவுகள் Excelக்கு வெற்றிகரமாக ஏற்றுமதி செய்யப்பட்டன!', kn: 'ಭಕ್ಷ್ಯಗಳನ್ನು Excel ಗೆ ಯಶಸ್ವಿಯಾಗಿ ರಫ್ತು ಮಾಡಲಾಗಿದೆ!', hi: 'व्यंजन सफलतापूर्वक एक्सेल में निर्यात किए गए!' },
+  [UITranslationKeys.ALERT_DISHES_IMPORTED_SUCCESS]: { en: 'Dishes imported/updated successfully from Excel!', te: 'Excel నుండి వంటకాలు విజయవంతంగా దిగుమతి/నవీకరించబడ్డాయి!', ta: 'Excel இலிருந்து உணவுகள் வெற்றிகரமாக இறக்குமதி/புதுப்பிக்கப்பட்டன!', kn: 'Excel ನಿಂದ ಭಕ್ಷ್ಯಗಳನ್ನು ಯಶಸ್ವಿಯಾಗಿ ಆಮದು/ನವೀಕರಿಸಲಾಗಿದೆ!', hi: 'एक्सेल से व्यंजन सफलतापूर्वक आयात/अद्यतन किए गए!' },
+  [UITranslationKeys.EXCEL_DISH_IMPORT_INVALID_INGREDIENT_ID]: { en: 'Invalid ingredient ID "{ingredientId}" found in ingredients JSON for dish "{dishName}".', te: '"{dishName}" వంటకం కోసం పదార్థాల JSONలో చెల్లని పదార్థం ID "{ingredientId}" కనుగొనబడింది.', ta: '"{dishName}" உணவுக்கான பொருட்கள் JSON இல் தவறான பொருள் ஐடி "{ingredientId}" கண்டறியப்பட்டது.', kn: '"{dishName}" ಭಕ್ಷ್ಯಕ್ಕಾಗಿ ಪದಾರ್ಥಗಳ JSON ನಲ್ಲಿ ಅಮಾನ್ಯ ಪದಾರ್ಥ ID "{ingredientId}" ಕಂಡುಬಂದಿದೆ.', hi: '"{dishName}" व्यंजन के लिए सामग्री JSON में अमान्य सामग्री आईडी "{ingredientId}" मिली।' },
+  [UITranslationKeys.EXCEL_DISH_IMPORT_INVALID_INGREDIENT_QUANTITY]: { en: 'Invalid quantity for ingredient ID "{ingredientId}" in dish "{dishName}".', te: '"{dishName}" వంటకంలో పదార్థం ID "{ingredientId}" కోసం చెల్లని పరిమాణం.', ta: '"{dishName}" உணவில் "{ingredientId}" பொருள் ஐடிக்கான தவறான அளவு.', kn: '"{dishName}" ಭಕ್ಷ್ಯದಲ್ಲಿ ಪದಾರ್ಥ ID "{ingredientId}" ಗಾಗಿ ಅಮಾನ್ಯ ಪ್ರಮಾಣ.', hi: '"{dishName}" व्यंजन में सामग्री आईडी "{ingredientId}" के लिए अमान्य मात्रा।' },
+  [UITranslationKeys.EXCEL_DISH_IMPORT_INVALID_INGREDIENTS_JSON]: { en: 'Invalid ingredients JSON string for dish "{dishName}". Error: {error}', te: '"{dishName}" వంటకం కోసం చెల్లని పదార్థాల JSON స్ట్రింగ్. లోపం: {error}', ta: '"{dishName}" உணவுக்கான தவறான பொருட்கள் JSON சரம். பிழை: {error}', kn: '"{dishName}" ಭಕ್ಷ್ಯಕ್ಕಾಗಿ ಅಮಾನ್ಯ ಪದಾರ್ಥಗಳ JSON ಸ್ಟ್ರಿಂಗ್. ದೋಷ: {error}', hi: '"{dishName}" व्यंजन के लिए अमान्य सामग्री JSON स्ट्रिंग। त्रुटि: {error}' },
+
   // General Alerts
   [UITranslationKeys.ALERT_PERMISSION_DENIED]: { en: 'Permission Denied.', te: 'అనుమతి నిరాకరించబడింది.', ta: 'அனுமதி மறுக்கப்பட்டது.', kn: 'ಅನುಮತಿ ನಿರಾಕರಿಸಲಾಗಿದೆ.', hi: 'अनुमति अस्वीकृत।' },
   [UITranslationKeys.ALERT_INGREDIENTS_EXPORTED_SUCCESS]: { en: 'Ingredients exported successfully to Excel!', te: 'పదార్థాలు Excelకి విజయవంతంగా ఎగుమతి చేయబడ్డాయి!', ta: 'பொருட்கள் Excelக்கு வெற்றிகரமாக ஏற்றுமதி செய்யப்பட்டன!', kn: 'ಪದಾರ್ಥಗಳನ್ನು Excel ಗೆ ಯಶಸ್ವಿಯಾಗಿ ರಫ್ತು ಮಾಡಲಾಗಿದೆ!', hi: 'सामग्री सफलतापूर्वक एक्सेल में निर्यात की गई!' },
+  [UITranslationKeys.ALERT_SIGNUP_SUCCESS_PENDING_APPROVAL]: {
+    [Language.EN]: 'Signup successful! Your account is pending administrator approval. You will be notified (simulated email) once active. You can try logging in later.',
+    [Language.TE]: 'నమోదు విజయవంతమైంది! మీ ఖాతా నిర్వాహకుడి ఆమోదం కోసం పెండింగ్‌లో ఉంది. సక్రియం అయిన తర్వాత మీకు తెలియజేయబడుతుంది (అనుకరణ ఇమెయిల్). మీరు తర్వాత లాగిన్ చేయడానికి ప్రయత్నించవచ్చు.',
+    [Language.TA]: 'பதிவு வெற்றிகரமாக முடிந்தது! உங்கள் கணக்கு நிர்வாகியின் ஒப்புதலுக்காக காத்திருக்கிறது. செயலில் வந்தவுடன் உங்களுக்கு அறிவிக்கப்படும் (போலி மின்னஞ்சல்). நீங்கள் பின்னர் உள்நுழைய முயற்சி செய்யலாம்.',
+    [Language.KN]: 'ಸೈನ್ ಅಪ್ ಯಶಸ್ವಿಯಾಗಿದೆ! ನಿಮ್ಮ ಖಾತೆಯು ನಿರ್ವಾಹಕರ ಅನುಮೋದನೆಗಾಗಿ ಕಾಯುತ್ತಿದೆ. ಸಕ್ರಿಯಗೊಂಡ ನಂತರ ನಿಮಗೆ ತಿಳಿಸಲಾಗುವುದು (ಅನುಕರಿಸಿದ ಇಮೇಲ್). ನೀವು ನಂತರ ಲಾಗಿನ್ ಮಾಡಲು ಪ್ರಯತ್ನಿಸಬಹುದು.',
+    [Language.HI]: 'साइनअप सफल! आपका खाता व्यवस्थापक अनुमोदन के लिए लंबित है। सक्रिय होने पर आपको सूचित किया जाएगा (नकली ईमेल)। आप बाद में लॉग इन करने का प्रयास कर सकते हैं।'
+  },
+  [UITranslationKeys.ALERT_USER_APPROVED_EMAIL_SIMULATION]: {
+    [Language.EN]: "User '{userName}' approved with role {roleAssigned}. They can now log in. (Simulated: An email notification would be sent to {userEmail})",
+    [Language.TE]: "'{userName}' వినియోగదారు {roleAssigned} పాత్రతో ఆమోదించబడ్డారు. వారు ఇప్పుడు లాగిన్ చేయవచ్చు. (అనుకరణ: {userEmail}కి ఇమెయిల్ నోటిఫికేషన్ పంపబడుతుంది)",
+    [Language.TA]: "'{userName}' பயனர் {roleAssigned} பாத்திரத்துடன் அங்கீகரிக்கப்பட்டார். அவர்கள் இப்போது உள்நுழையலாம். (போலி: {userEmail}க்கு ஒரு மின்னஞ்சல் அறிவிப்பு அனுப்பப்படும்)",
+    [Language.KN]: "'{userName}' ಬಳಕೆದಾರರನ್ನು {roleAssigned} ಪಾತ್ರದೊಂದಿಗೆ ಅನುಮೋದಿಸಲಾಗಿದೆ. ಅವರು ಈಗ ಲಾಗಿನ್ ಮಾಡಬಹುದು. (ಅನುಕರಿಸಲಾಗಿದೆ: {userEmail} ಗೆ ಇಮೇಲ್ ಅಧಿಸೂಚನೆಯನ್ನು ಕಳುಹಿಸಲಾಗುತ್ತದೆ)",
+    [Language.HI]: "उपयोगकर्ता '{userName}' को भूमिका {roleAssigned} के साथ अनुमोदित किया गया। वे अब लॉग इन कर सकते हैं। (नकली: {userEmail} पर एक ईमेल सूचना भेजी जाएगी)"
+  },
+
 
   // Customer Order Actions
   [UITranslationKeys.HTML_VIEW_ORDER_BUTTON]: { en: 'View HTML', te: 'HTML చూడండి', ta: 'HTML காண்க', kn: 'HTML ವೀಕ್ಷಿಸಿ', hi: 'एचटीएमएल देखें' },
   [UITranslationKeys.PRINT_ORDER_BUTTON]: { en: 'Print Order', te: 'ఆర్డర్‌ను ముద్రించండి', ta: 'ஆர்டரை அச்சிடு', kn: 'ಆರ್ಡರ್ ಮುದ್ರಿಸಿ', hi: 'आदेश प्रिंट करें' },
+
+  // Order Ingredient Editing
+  [UITranslationKeys.EDIT_ORDER_INGREDIENT_TITLE]: { en: 'Edit Order Ingredient', te: 'ఆర్డర్ పదార్థాన్ని సవరించండి', ta: 'ஆர்டர் பொருளைத் திருத்து', kn: 'ಆರ್ಡರ್ ಪದಾರ್ಥವನ್ನು ಸಂಪಾದಿಸಿ', hi: 'ऑर्डर सामग्री संपादित करें' },
+  [UITranslationKeys.ADD_ORDER_INGREDIENT_TITLE]: { en: 'Add Ingredient to Order', te: 'ఆర్డర్‌కు పదార్థాన్ని జోడించండి', ta: 'ஆர்டரில் பொருளைச் சேர்', kn: 'ಆರ್ಡರ್‌ಗೆ ಪದಾರ್ಥವನ್ನು ಸೇರಿಸಿ', hi: 'ऑर्डर में सामग्री जोड़ें' },
+  [UITranslationKeys.ADD_INGREDIENT_TO_ORDER_BUTTON]: { en: 'Add Ingredient to Order', te: 'ఆర్డర్‌కు పదార్థాన్ని జోడించు', ta: 'ஆர்டரில் பொருளைச் சேர்', kn: 'ಆರ್ಡರ್‌ಗೆ ಪದಾರ್ಥವನ್ನು ಸೇರಿಸಿ', hi: 'ऑर्डर में सामग्री जोड़ें' },
+  [UITranslationKeys.ORDER_INGREDIENT_NAME_LABEL]: { en: 'Ingredient Name', te: 'పదార్థం పేరు', ta: 'பொருள் பெயர்', kn: 'ಪದಾರ್ಥದ ಹೆಸರು', hi: 'सामग्री का नाम' },
+  [UITranslationKeys.MASTER_INGREDIENT_LABEL]: { en: 'Master Ingredient', te: 'ప్రధాన పదార్థం', ta: 'முதன்மை பொருள்', kn: 'ಮುಖ್ಯ ಪದಾರ್ಥ', hi: 'मुख्य सामग्री' },
+  [UITranslationKeys.SELECT_INGREDIENT_PLACEHOLDER]: { en: 'Select an ingredient...', te: 'ఒక పదార్థాన్ని ఎంచుకోండి...', ta: 'ஒரு பொருளைத் தேர்ந்தெடுக்கவும்...', kn: 'ಒಂದು ಪದಾರ್ಥವನ್ನು ಆಯ್ಕೆಮಾಡಿ...', hi: 'एक सामग्री चुनें...' },
 };
 
 export const getUIText = (key: UITranslationKeys, preferredLang: Language, fallbackLang: Language = Language.EN, replacements?: {[key:string]: string}): string => {
