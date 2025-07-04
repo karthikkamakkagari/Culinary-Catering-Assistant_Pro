@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { XMarkIcon } from './icons';
+import { XMarkIcon } from './icons.tsx';
 
 interface ModalProps {
   onClose: () => void;

@@ -1,4 +1,4 @@
-import { Page, AuthUser, UserRole, Language, LanguageLabels } from './types';
+import { Page, AuthUser, UserRole, Language, LanguageLabels } from './types.ts';
 
 export const APP_TITLE = "Culinary Catering Assistant";
 
@@ -18,16 +18,16 @@ export const DEFAULT_IMAGE_SIZE = 150;
 export const DEFAULT_SUPREM_USER: AuthUser = {
   id: 'suprem_user_001',
   username: 'suprem',
-  password: 'password', 
-  cateringName: 'Master Caterers Inc.',
+  password_hash: 'password', 
+  catering_name: 'Master Caterers Inc.',
   phone: '000-000-0000',
   address: '123 Admin St, City',
   email: 'suprem@example.com', 
   credits: 99999, 
   role: UserRole.SUPREM,
-  isApproved: true,
-  imageUrl: placeholderImage(DEFAULT_IMAGE_SIZE,DEFAULT_IMAGE_SIZE, 'suprem'),
-  preferredLanguage: Language.EN, // Added
+  is_approved: true,
+  image_url: placeholderImage(DEFAULT_IMAGE_SIZE,DEFAULT_IMAGE_SIZE, 'suprem'),
+  preferred_language: Language.EN,
 };
 
 export const SupportedLanguages = [Language.EN, Language.TE, Language.TA, Language.KN, Language.HI];

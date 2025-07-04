@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useRef } from 'react';
-import { XMarkIcon, ArrowUpTrayIcon, LinkIcon, PhotoIcon } from './icons'; // Assuming PhotoIcon exists or can be added
+import { XMarkIcon, ArrowUpTrayIcon, LinkIcon, PhotoIcon } from './icons.tsx';
 
 interface ImageInputProps {
   currentImageUrl?: string | null;

@@ -1,4 +1,6 @@
-import { LocalizedText, Language } from './types';
+
+import { LocalizedText, Language, Ingredient } from './types.ts';
+import { SupportedLanguages } from './constants.ts';
 
 // Localization Utility
 export const getTranslatedText = (
@@ -14,4 +16,13 @@ export const getTranslatedText = (
     if (localizedText[key as Language]) return localizedText[key as Language]!;
   }
   return 'N/A'; // Or some other placeholder
+};
+
+export const getIngredientName = (
+    ingredient: Ingredient | undefined,
+    preferredLang: Language,
+    fallbackLang: Language = Language.EN
+): string => {
+    if (!ingredient) return 'N/A';
+    return getTranslatedText(ingredient.name_localized, preferredLang, fallbackLang);
 };

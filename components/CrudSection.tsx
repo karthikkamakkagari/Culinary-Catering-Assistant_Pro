@@ -1,9 +1,9 @@
 
 import React from 'react';
-import { PlusIcon, SearchIcon } from './icons'; 
-import { Language, UITranslationKeys } from '../types'; 
+import { PlusIcon, SearchIcon } from './icons.tsx'; 
+import { Language, UITranslationKeys } from '../types.ts'; 
 // No direct import of getTranslatedText, as items are pre-filtered with their display names
-import { getUIText } from '../translations'; // For static UI elements
+import { getUIText } from '../translations.ts'; // For static UI elements
 
 interface CrudSectionProps {
   title: string; 

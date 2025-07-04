@@ -1,3 +1,4 @@
+
 export enum Page {
   PublicHome = 'PUBLIC_HOME', // New public landing page
   Login = 'LOGIN',
@@ -41,25 +42,25 @@ export type LocalizedText = {
 export interface AuthUser {
   id: string;
   username: string;
-  password?: string; 
-  cateringName: string;
-  imageUrl?: string;
+  password_hash?: string; 
+  catering_name: string;
+  image_url?: string;
   phone: string;
   address: string;
   email: string; 
   credits: number; 
   role: UserRole;
-  isApproved: boolean;
-  preferredLanguage: Language; // Added
+  is_approved: boolean;
+  preferred_language: Language; 
 }
 
 export interface Ingredient {
   id: string;
-  name: LocalizedText;
-  imageUrl: string;
-  quantity: number; 
+  name_localized: LocalizedText;
+  image_url: string;
+  quantity: number;
   unit: string;
-  price: number; // Added: Price in Rupees for the specified quantity and unit
+  price: number;
 }
 
 export interface DishIngredient {
@@ -69,19 +70,19 @@ export interface DishIngredient {
 
 export interface Dish {
   id: string;
-  name: LocalizedText;
-  imageUrl: string;
+  name_localized: LocalizedText; // Updated
+  image_url: string; // Updated
   ingredients: DishIngredient[];
-  preparationSteps: LocalizedText;
+  preparation_steps_localized: LocalizedText; // Updated
 }
 
 export interface CookingItem {
   id: string;
-  name: LocalizedText;
-  imageUrl: string;
-  summary: LocalizedText;
+  name_localized: LocalizedText; // Updated
+  image_url: string; // Updated
+  summary_localized: LocalizedText; // Updated
   unit: string;
-  price: number; // Added: Price in Rupees per unit
+  price: number; 
 }
 
 export interface CustomerDishSelection {
@@ -96,44 +97,69 @@ export interface CustomerCookingItemSelection {
 export interface CumulativeIngredient {
   id: string; 
   masterIngredientId: string; 
-  name: string; 
+  name: string; // This will be the translated name for display
   totalQuantity: number;
   unit: string;
-  totalPrice: number; // Added: Total cost for this cumulative ingredient
+  totalPrice: number; 
 }
 
 export interface SelectedCookingItemDetail {
     id: string; 
-    masterCookingItemId: string; // Added: Link to the master CookingItem
-    name: string;
+    masterCookingItemId: string; 
+    name: string; // This will be the translated name for display
     quantity: number;
     unit: string;
-    price: number; // Price per unit
-    totalPrice: number; // Total cost for this selection (quantity * price)
+    price: number; 
+    totalPrice: number; 
 }
 
 export interface GeneratedOrder {
   cumulativeIngredients: CumulativeIngredient[];
   selectedCookingItems: SelectedCookingItemDetail[]; 
-  totalOrderCost: number; // Added: Overall cost of the order
+  totalOrderCost: number; 
 }
 
 export interface Customer {
   id:string;
   name: string; 
-  imageUrl: string;
+  image_url: string; // Updated
   phone: string;
   address: string;
-  numberOfPersons: number;
+  number_of_persons: number; // Updated
   selectedDishes: CustomerDishSelection[];
   selectedCookingItems: CustomerCookingItemSelection[];
-  generatedOrder?: GeneratedOrder | null;
+  generated_order_details?: GeneratedOrder | null; // Updated
   userId?: string; 
   email?: string; 
   credits?: number; 
   newPassword?: string; 
-  cateringName?: string; // Added for profile form context
+  catering_name?: string; 
 }
+
+// Base fields for a customer record, excluding relational/UI-specific data
+export type CustomerBase = Pick<Customer,
+  'id' |
+  'name' |
+  'image_url' | // Updated
+  'phone' |
+  'address' |
+  'number_of_persons' | // Updated
+  'userId'
+>;
+
+// Represents the full record in the NocoDB 'Customers' table
+export type CustomerTableRecord = CustomerBase & {
+  generated_order_details?: GeneratedOrder | null; // Updated: This is a JSON field on the main table
+};
+
+// Payload for creating a new customer record.
+// 'id' is client-generated. 'generated_order_details' is typically not set at creation.
+export type CustomerTableCreatePayload = CustomerBase;
+
+// Payload for updating an existing customer record.
+// 'id' is in the URL. Any field from CustomerTableRecord (like generated_order_details) can be updated.
+export type CustomerTableUpdatePayload = Partial<Omit<CustomerTableRecord, 'id'>>;
+
 
 export const IngredientUnits: string[] = ['kg', 'gram', 'piece', 'leaves', 'liters', 'ml', 'tsp', 'tbsp', 'cup'];
 export const CookingItemUnits: string[] = ['kg', 'gram', 'piece', 'Big one', 'Small one', 'Medium one', 'pack', 'bottle'];
@@ -234,7 +260,9 @@ export enum UITranslationKeys {
   ALERT_PERMISSION_DENIED = 'ALERT_PERMISSION_DENIED',
   ALERT_INGREDIENTS_EXPORTED_SUCCESS = 'ALERT_INGREDIENTS_EXPORTED_SUCCESS',
   ALERT_SIGNUP_SUCCESS_PENDING_APPROVAL = 'ALERT_SIGNUP_SUCCESS_PENDING_APPROVAL', 
-  ALERT_USER_APPROVED_EMAIL_SIMULATION = 'ALERT_USER_APPROVED_EMAIL_SIMULATION', 
+  ALERT_USER_APPROVED_EMAIL_SIMULATION = 'ALERT_USER_APPROVED_EMAIL_SIMULATION',
+  ALERT_USERNAME_RESERVED = 'ALERT_USERNAME_RESERVED',
+  ALERT_USERNAME_TAKEN = 'ALERT_USERNAME_TAKEN',
 
   // Customer Order Actions
   HTML_VIEW_ORDER_BUTTON = 'HTML_VIEW_ORDER_BUTTON',
