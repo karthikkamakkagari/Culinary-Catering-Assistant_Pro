@@ -1,25 +1,26 @@
 
 // App.tsx
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Page, Ingredient, Dish, CookingItem, Customer, ModalType, IngredientUnits, CookingItemUnits, DishIngredient, CustomerDishSelection, CustomerCookingItemSelection, GeneratedOrder, CumulativeIngredient, AuthUser, UserRole, Language, LocalizedText, LanguageLabels, UITranslationKeys, SelectedCookingItemDetail, CustomerTableCreatePayload, CustomerTableUpdatePayload } from './types';
-import { APP_TITLE, placeholderImage, DEFAULT_IMAGE_SIZE, baseNavigationItems, DEFAULT_SUPREM_USER, SupportedLanguages, LanguageLabelMapping, IngredientBaseUnits, UnitConversionFactors } from './constants';
-import { API_BASE_URL, NOCODB_API_TOKEN, USERS_TABLE_PATH } from './apiConstants'; // Corrected path
-import { PlusIcon, PencilIcon, TrashIcon, SearchIcon, DocumentTextIcon, CalculatorIcon, XMarkIcon, ChevronDownIcon, ChevronUpIcon, UserCircleIcon, EyeIcon, EyeSlashIcon, UserPlusIcon, ArrowLeftOnRectangleIcon, CogIcon, CheckCircleIcon, ShieldCheckIcon, InformationCircleIcon, ArrowLeftIcon, PrinterIcon, DocumentArrowDownIcon, ArrowUpTrayIcon, ArrowDownTrayIcon, ShareIcon } from './components/icons';
-import Modal from './components/Modal';
-import LoginForm from './components/LoginForm';
-import SignupForm from './components/SignupForm';
-import CustomerForm from './components/CustomerForm';
-import CrudSection from './components/CrudSection';
-import IngredientForm from './components/IngredientForm';
-import DishForm from './components/DishForm';
-import CookingItemForm from './components/CookingItemForm';
-import UserManagementPage from './components/UserManagementPage';
-import UserDetailsViewComponent from './components/UserDetailsViewComponent';
-import PublicHomePage from './components/PublicHomePage';
-import OrderIngredientForm from './components/OrderIngredientForm';
-import OrderCookingItemForm from './components/OrderCookingItemForm';
-import { getUIText } from './translations';
-import { getTranslatedText } from './localization';
+import { Page, Ingredient, Dish, CookingItem, Customer, ModalType, IngredientUnits, CookingItemUnits, DishIngredient, CustomerDishSelection, CustomerCookingItemSelection, GeneratedOrder, CumulativeIngredient, AuthUser, UserRole, Language, LocalizedText, LanguageLabels, UITranslationKeys, SelectedCookingItemDetail, CustomerTableCreatePayload, CustomerTableUpdatePayload } from '../types';
+import { APP_TITLE, placeholderImage, DEFAULT_IMAGE_SIZE, baseNavigationItems, DEFAULT_SUPREM_USER, SupportedLanguages, LanguageLabelMapping, IngredientBaseUnits, UnitConversionFactors } from '../constants';
+import { API_BASE_URL, NOCODB_API_TOKEN, USERS_TABLE_PATH } from './apiConstants';
+import { PlusIcon, PencilIcon, TrashIcon, SearchIcon, DocumentTextIcon, CalculatorIcon, XMarkIcon, ChevronDownIcon, ChevronUpIcon, UserCircleIcon, EyeIcon, EyeSlashIcon, UserPlusIcon, ArrowLeftOnRectangleIcon, CogIcon, CheckCircleIcon, ShieldCheckIcon, InformationCircleIcon, ArrowLeftIcon, PrinterIcon, DocumentArrowDownIcon, ArrowUpTrayIcon, ArrowDownTrayIcon, ShareIcon } from '../components/icons';
+import Modal from '../components/Modal';
+import LoginForm from '../components/LoginForm';
+import SignupForm from '../components/SignupForm';
+import CustomerForm from '../components/CustomerForm';
+import CrudSection from '../components/CrudSection';
+import IngredientForm from '../components/IngredientForm';
+import DishForm from '../components/DishForm';
+import CookingItemForm from '../components/CookingItemForm';
+import UserManagementPage from '../components/UserManagementPage';
+import UserDetailsViewComponent from '../components/UserDetailsViewComponent';
+import PublicHomePage from '../components/PublicHomePage';
+import OrderIngredientForm from '../components/OrderIngredientForm';
+import OrderCookingItemForm from '../components/OrderCookingItemForm';
+import SupremDashboard from '../components/SupremDashboard'; // Import the new dashboard
+import { getUIText } from '../translations';
+import { getTranslatedText, getIngredientName } from '../localization';
 import * as XLSX from 'xlsx';
 import {
     getAllUsersAPI, addUserAPI, updateUserAPI, getUserAPI, getUserByUsernameAPI,
@@ -29,12 +30,12 @@ import {
     getAllCustomersAPI, addCustomerAPI, updateCustomerAPI, deleteCustomerAPI, getCustomerAPI, getCustomersByUserIdAPI,
     getCustomerSelectedDishesAPI, addCustomerSelectedDishAPI, deleteCustomerSelectedDishAPI, CustomerSelectedDishRecord,
     getCustomerSelectedCookingItemsAPI, addCustomerSelectedCookingItemAPI, updateCustomerSelectedCookingItemAPI, deleteCustomerSelectedCookingItemAPI, CustomerSelectedCookingItemRecord
-} from './data.service'; // Corrected path
+} from './data.service';
 
 
 const AUTH_USER_STORAGE_KEY = 'culinaryCateringAppUser';
 
-const App: React.FC = () => {
+export const App: React.FC = () => {
   if (!NOCODB_API_TOKEN || NOCODB_API_TOKEN === 'YOUR_NOCODB_API_TOKEN_HERE') {
     return (
         <div className="flex flex-col justify-center items-center h-screen bg-red-50 p-4">
@@ -114,17 +115,11 @@ const App: React.FC = () => {
             if (!supremUserExists && USERS_TABLE_PATH) { // Ensure USERS_TABLE_PATH is defined
                 try {
                     console.log(`Default suprem user '${DEFAULT_SUPREM_USER.username}' not found. Attempting to create...`);
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    const { id, ...supremDataForCreation } = DEFAULT_SUPREM_USER; // Exclude ID for creation
-                    const createdSupremUser = await addUserAPI(supremDataForCreation);
+                    const createdSupremUser = await addUserAPI(DEFAULT_SUPREM_USER);
                     console.log("Default suprem user created:", createdSupremUser);
                     fetchedUsers.push(createdSupremUser); // Add to the list for current session
                 } catch (creationError: any) {
                     console.error("Failed to create default suprem user:", creationError);
-                    // If creation fails specifically due to 'username already exists' (e.g., NocoDB specific error code/message)
-                    // then it's not a critical failure, just means it was created by another instance/race condition.
-                    // Otherwise, it might be a more significant issue.
-                    // For now, we log and continue. If 'suprem' login still fails, it points to other issues.
                     if (creationError?.data?.message?.includes('Validation failed') && creationError?.data?.details?.[0]?.message?.includes('unique constraint')) {
                         console.warn("Suprem user creation conflict (likely already exists or race condition). Fetching users again.");
                         fetchedUsers = await getAllUsersAPI(); // Re-fetch to ensure we have the latest list
@@ -249,11 +244,26 @@ const App: React.FC = () => {
   const importIngredientsInputRef = useRef<HTMLInputElement>(null);
   const importDishesInputRef = useRef<HTMLInputElement>(null);
   const importCookingItemsInputRef = useRef<HTMLInputElement>(null);
+  const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
+  const settingsMenuRef = useRef<HTMLDivElement>(null);
+
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+  
+  // Close settings menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (settingsMenuRef.current && !settingsMenuRef.current.contains(event.target as Node)) {
+        setIsSettingsMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [settingsMenuRef]);
+
 
   const handleLogin = async (loginAttemptUser: {username: string, password?: string}) => {
     setIsLoggingIn(true);
@@ -291,27 +301,35 @@ const App: React.FC = () => {
         setIsLoggingIn(false);
     }
   };
+  
+  const generateId = (): string => `id_${new Date().getTime()}_${Math.random().toString(36).substring(2, 9)}`;
 
   const handleSignup = async (newUserData: Omit<AuthUser, 'id' | 'role' | 'is_approved' | 'credits'>) => {
     setIsSigningUp(true);
     setApiError(null);
     const lowercaseUsername = newUserData.username.trim().toLowerCase();
-    const apiUserData: Omit<AuthUser, 'id'> = {
+    const apiUserData: Omit<AuthUser, 'role' | 'is_approved' | 'credits'> = {
+      id: generateId(),
       username: lowercaseUsername,
       password_hash: newUserData.password_hash,
       catering_name: newUserData.catering_name,
       phone: newUserData.phone,
       address: newUserData.address,
       email: newUserData.email,
-      is_approved: false,
-      role: UserRole.USER,
-      credits: 0,
       image_url: newUserData.image_url || placeholderImage(DEFAULT_IMAGE_SIZE,DEFAULT_IMAGE_SIZE, lowercaseUsername),
       preferred_language: newUserData.preferred_language || Language.EN,
     };
-    console.log("Attempting to signup with payload:", JSON.stringify(apiUserData, null, 2)); // DIAGNOSTIC LOG
+    
+    const finalPayload = {
+      ...apiUserData,
+      is_approved: false,
+      role: UserRole.USER,
+      credits: 0,
+    };
+
+    console.log("Attempting to signup with payload:", JSON.stringify(finalPayload, null, 2));
     try {
-        const newUser = await addUserAPI(apiUserData);
+        const newUser = await addUserAPI(finalPayload);
         setUsers(await getAllUsersAPI());
         alert(getUIText(UITranslationKeys.ALERT_SIGNUP_SUCCESS_PENDING_APPROVAL, newUser.preferred_language));
         setCurrentPage(Page.Login);
@@ -468,7 +486,22 @@ const App: React.FC = () => {
     return false;
   };
 
-  const handleSaveIngredient = async (ingredientData: Omit<Ingredient, 'id'> & {id?: string}) => {
+    const generateIngredientId = (): string => {
+        const existingIds = ingredients.map(ing => {
+            if (ing.id.startsWith('ing')) {
+                const numPart = ing.id.substring(3);
+                const num = parseInt(numPart, 10);
+                if (!isNaN(num)) {
+                    return num;
+                }
+            }
+            return 0;
+        });
+        const maxId = existingIds.length > 0 ? Math.max(...existingIds) : 0;
+        return `ing${maxId + 1}`;
+    };
+
+  const handleSaveIngredient = async (ingredientData: Partial<Omit<Ingredient, 'id'>> & {id?: string}) => {
     if (!currentUser || !canPerformAction(ingredientData.id ? 'edit' : 'add', 'ingredient')) {
         handleApiError("Permission denied to save ingredient.");
         return;
@@ -476,28 +509,22 @@ const App: React.FC = () => {
     setIsModalSubmitting(true);
     setApiError(null);
     
-    const idToSave = ingredientData.id || generateId();
-    const existing = ingredients.find(i => i.id === idToSave);
-    const newNameLocalized: LocalizedText = existing?.name_localized ? {...existing.name_localized} : {};
+    const idToSave = ingredientData.id || generateIngredientId();
     
-    // Assuming ingredientData.name_localized is the direct input from the form
-    if (typeof ingredientData.name_localized === 'string') newNameLocalized[currentUser.preferred_language] = ingredientData.name_localized;
-    else newNameLocalized[currentUser.preferred_language] = getTranslatedText(ingredientData.name_localized, currentUser.preferred_language);
-    
-    if (!newNameLocalized[Language.EN] && currentUser.preferred_language !== Language.EN) {
-      newNameLocalized[Language.EN] = typeof ingredientData.name_localized === 'string' ? ingredientData.name_localized : getTranslatedText(ingredientData.name_localized, Language.EN);
-    }
-
     const apiIngredientData: Ingredient = {
         id: idToSave, 
-        name_localized: newNameLocalized,
-        image_url: ingredientData.image_url || placeholderImage(DEFAULT_IMAGE_SIZE, DEFAULT_IMAGE_SIZE, getTranslatedText(newNameLocalized, currentUser.preferred_language)),
-        quantity: ingredientData.quantity, 
-        unit: ingredientData.unit, 
-        price: ingredientData.price,
+        image_url: ingredientData.image_url || placeholderImage(DEFAULT_IMAGE_SIZE, DEFAULT_IMAGE_SIZE, ingredientData.name_en || 'ingredient'),
+        quantity: ingredientData.quantity!, 
+        unit: ingredientData.unit!, 
+        price: ingredientData.price!,
+        name_en: ingredientData.name_en,
+        name_te: ingredientData.name_te,
+        name_ta: ingredientData.name_ta,
+        name_kn: ingredientData.name_kn,
+        name_hi: ingredientData.name_hi,
     };
     try {
-        if (existing) await updateIngredientAPI(apiIngredientData.id, apiIngredientData);
+        if (ingredientData.id) await updateIngredientAPI(apiIngredientData.id, apiIngredientData);
         else await addIngredientAPI(apiIngredientData);
         setIngredients(await getAllIngredientsAPI());
         closeModal();
@@ -792,7 +819,7 @@ const App: React.FC = () => {
   };
 
   const calculateTotalIngredientsForCustomer = (customer: Customer): CumulativeIngredient[] => {
-    const aggregatedIngredients: { [ingredientId: string]: { totalQuantity: number; unit: string; masterIngredientId: string; name_localized: LocalizedText; pricePerBaseUnit: number; baseUnitQuantity: number; } } = {};
+    const aggregatedIngredients: { [ingredientId: string]: { totalQuantity: number; unit: string; masterIngredientId: string; name: string; pricePerBaseUnit: number; baseUnitQuantity: number; } } = {};
     if (!customer.selectedDishes) return [];
 
     customer.selectedDishes.forEach(selection => {
@@ -805,13 +832,13 @@ const App: React.FC = () => {
                     const { quantity: masterConvertedQuantity, unit: masterBaseUnit } = convertToBaseUnit(masterIngredient.quantity, masterIngredient.unit);
                     
                     if (baseUnit !== masterBaseUnit) {
-                         console.warn(`Unit mismatch for ingredient ${getTranslatedText(masterIngredient.name_localized, currentUser?.preferred_language || Language.EN)}: dish uses ${dishIngredient.quantity} ${masterIngredient.unit} (base ${baseUnit}), but master is ${masterIngredient.quantity} ${masterIngredient.unit} (base ${masterBaseUnit}). Calculations might be inaccurate if units are not compatible without further context (e.g. density for weight/volume).`);
+                         console.warn(`Unit mismatch for ingredient ${getIngredientName(masterIngredient, currentUser?.preferred_language || Language.EN)}: dish uses ${dishIngredient.quantity} ${masterIngredient.unit} (base ${baseUnit}), but master is ${masterIngredient.quantity} ${masterIngredient.unit} (base ${masterBaseUnit}). Calculations might be inaccurate if units are not compatible without further context (e.g. density for weight/volume).`);
                     }
                     const pricePerMasterBaseUnit = masterConvertedQuantity > 0 ? masterIngredient.price / masterConvertedQuantity : 0;
                     const requiredQuantityForDish = convertedQuantity * customer.number_of_persons;
 
                     if (!aggregatedIngredients[masterIngredient.id]) {
-                        aggregatedIngredients[masterIngredient.id] = { totalQuantity: 0, unit: masterBaseUnit, masterIngredientId: masterIngredient.id, name_localized: masterIngredient.name_localized, pricePerBaseUnit: pricePerMasterBaseUnit, baseUnitQuantity: masterConvertedQuantity };
+                        aggregatedIngredients[masterIngredient.id] = { totalQuantity: 0, unit: masterBaseUnit, masterIngredientId: masterIngredient.id, name: getIngredientName(masterIngredient, currentUser?.preferred_language || Language.EN), pricePerBaseUnit: pricePerMasterBaseUnit, baseUnitQuantity: masterConvertedQuantity };
                     }
                     aggregatedIngredients[masterIngredient.id].totalQuantity += requiredQuantityForDish;
                 }
@@ -821,7 +848,7 @@ const App: React.FC = () => {
     return Object.values(aggregatedIngredients).map(agg => ({
         id: `cumulative-${agg.masterIngredientId}`,
         masterIngredientId: agg.masterIngredientId,
-        name: getTranslatedText(agg.name_localized, currentUser?.preferred_language || Language.EN),
+        name: agg.name,
         totalQuantity: parseFloat(agg.totalQuantity.toFixed(3)), 
         unit: agg.unit,
         totalPrice: parseFloat((agg.totalQuantity * agg.pricePerBaseUnit).toFixed(2))
@@ -909,7 +936,7 @@ const App: React.FC = () => {
             
             const existingCumulative = newCumulativeIngredients.find(ci => ci.masterIngredientId === data.masterIngredientId);
             if(existingCumulative) {
-                 handleApiError(`Ingredient ${getTranslatedText(masterIng.name_localized, currentUser?.preferred_language || Language.EN)} already exists in the order. Please edit it instead of adding duplicates.`);
+                 handleApiError(`Ingredient ${getIngredientName(masterIng, currentUser?.preferred_language || Language.EN)} already exists in the order. Please edit it instead of adding duplicates.`);
                  setIsModalSubmitting(false);
                  return;
             }
@@ -917,7 +944,7 @@ const App: React.FC = () => {
             newCumulativeIngredients.push({
                 id: `cumulative-${data.masterIngredientId}`,
                 masterIngredientId: data.masterIngredientId,
-                name: getTranslatedText(masterIng.name_localized, currentUser?.preferred_language || Language.EN),
+                name: getIngredientName(masterIng, currentUser?.preferred_language || Language.EN),
                 totalQuantity: data.quantity, 
                 unit: data.unit, 
                 totalPrice: parseFloat((data.quantity * pricePerBase * (convertToBaseUnit(1, data.unit).quantity / convertToBaseUnit(1, masterBaseUnit).quantity)).toFixed(2)) 
@@ -1096,9 +1123,8 @@ const App: React.FC = () => {
     }
   };
 
-  const generateId = (): string => `id_${new Date().getTime()}_${Math.random().toString(36).substring(2, 9)}`;
-
   const handleLanguageChange = async (newLang: Language) => {
+    setIsSettingsMenuOpen(false);
     if (currentUser) {
         setIsModalSubmitting(true);
         setApiError(null);
@@ -1125,25 +1151,21 @@ const App: React.FC = () => {
     if (!currentUser || !canPerformAction('add', 'ingredient')) { 
         handleApiError(getUIText(UITranslationKeys.ALERT_PERMISSION_DENIED, currentUser?.preferred_language || Language.EN)); return;
     }
-    const lang = currentUser.preferred_language;
     const dataToExport = ingredients.map(ing => ({
         ID: ing.id,
-        Name_EN: ing.name_localized[Language.EN] || getTranslatedText(ing.name_localized, Language.EN), 
-        Name_Native: getTranslatedText(ing.name_localized, lang, Language.EN), 
+        Name_EN: ing.name_en || '',
+        Name_TE: ing.name_te || '',
+        Name_TA: ing.name_ta || '',
+        Name_KN: ing.name_kn || '',
+        Name_HI: ing.name_hi || '',
         Quantity: ing.quantity,
         Unit: ing.unit,
         Price_Rupees: ing.price,
         Image_URL: ing.image_url,
-        ...((lang !== Language.EN) ? 
-            Object.fromEntries(SupportedLanguages.filter(l => l !== Language.EN && l !== lang).map(l => [`Name_${l.toUpperCase()}`, ing.name_localized[l] || '']))
-            : {})
     }));
-    const headers = ["ID", `Name_EN`, `Name_Native`, "Quantity", "Unit", "Price_Rupees", "Image_URL"];
-    if (lang !== Language.EN) {
-        SupportedLanguages.filter(l => l !== Language.EN && l !== lang).forEach(l => headers.push(`Name_${l.toUpperCase()}`));
-    }
+    const headers = ["ID", "Name_EN", "Name_TE", "Name_TA", "Name_KN", "Name_HI", "Quantity", "Unit", "Price_Rupees", "Image_URL"];
     exportToExcel(dataToExport, 'Ingredients_Export', 'Ingredients', headers);
-    alert(getUIText(UITranslationKeys.ALERT_INGREDIENTS_EXPORTED_SUCCESS, lang));
+    alert(getUIText(UITranslationKeys.ALERT_INGREDIENTS_EXPORTED_SUCCESS, currentUser.preferred_language));
   };
   
   const handleImportIngredients = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -1167,7 +1189,7 @@ const App: React.FC = () => {
 
             if (jsonData.length === 0) { throw new Error("Excel sheet is empty or headers are missing."); }
             const actualHeaders = Object.keys(jsonData[0]);
-            const expectedHeaders = ["ID", "Name_EN", "Name_Native", "Quantity", "Unit", "Price_Rupees"]; 
+            const expectedHeaders = ["ID", "Name_EN", "Quantity", "Unit", "Price_Rupees"];
              if (!expectedHeaders.every(header => actualHeaders.includes(header))) {
                 throw new Error(getUIText(UITranslationKeys.EXCEL_HEADER_MISMATCH_ALERT, currentUser.preferred_language, Language.EN, {expectedHeaders: expectedHeaders.join(', '), actualHeaders: actualHeaders.join(', ')}));
             }
@@ -1176,30 +1198,27 @@ const App: React.FC = () => {
             const ingredientsToAdd: Ingredient[] = [];
 
             for (const row of jsonData) {
-                const nameLocalized: LocalizedText = { [Language.EN]: row.Name_EN || row.Name_Native }; 
-                nameLocalized[currentUser.preferred_language] = row.Name_Native || row.Name_EN; 
-                SupportedLanguages.forEach(lang => {
-                    if (row[`Name_${lang.toUpperCase()}`]) nameLocalized[lang] = row[`Name_${lang.toUpperCase()}`];
-                });
-                if (!nameLocalized[Language.EN] && currentUser.preferred_language !== Language.EN) nameLocalized[Language.EN] = nameLocalized[currentUser.preferred_language]; 
-
-                const ingredientData = {
-                    name_localized: nameLocalized,
+                const ingredientData: Partial<Ingredient> = {
+                    name_en: row.Name_EN,
+                    name_te: row.Name_TE,
+                    name_ta: row.Name_TA,
+                    name_kn: row.Name_KN,
+                    name_hi: row.Name_HI,
                     quantity: parseFloat(row.Quantity),
                     unit: row.Unit,
                     price: parseFloat(row.Price_Rupees),
                     image_url: row.Image_URL || null,
                 };
 
-                if (isNaN(ingredientData.quantity) || ingredientData.quantity <=0 || isNaN(ingredientData.price) || ingredientData.price < 0) {
-                    console.warn(`Skipping row due to invalid data (Name: ${getTranslatedText(ingredientData.name_localized, Language.EN)}, Qty: ${row.Quantity}, Price: ${row.Price_Rupees})`);
+                if (!ingredientData.name_en || isNaN(ingredientData.quantity!) || ingredientData.quantity! <= 0 || isNaN(ingredientData.price!) || ingredientData.price! < 0) {
+                    console.warn(`Skipping row due to invalid data (Name: ${ingredientData.name_en}, Qty: ${row.Quantity}, Price: ${row.Price_Rupees})`);
                     continue;
                 }
 
                 if (row.ID && ingredients.some(ing => ing.id === row.ID)) { 
                     ingredientsToUpdate.push({ id: row.ID, ...ingredientData });
                 } else {
-                    ingredientsToAdd.push({ id: generateId(), ...ingredientData } as Ingredient); 
+                    ingredientsToAdd.push({ id: generateIngredientId(), ...ingredientData } as Ingredient); 
                 }
             }
             if (ingredientsToUpdate.length > 0) await Promise.all(ingredientsToUpdate.map(ing => updateIngredientAPI(ing.id!, ing)));
@@ -1472,7 +1491,22 @@ const App: React.FC = () => {
         case Page.PublicHome: return <PublicHomePage onNavigate={setCurrentPage} />;
         case Page.Login: return <LoginForm onLogin={handleLogin} users={users} onSwitchToSignup={() => setCurrentPage(Page.Signup)} isLoggingIn={isLoggingIn} />;
         case Page.Signup: return <SignupForm onSignup={handleSignup} onSwitchToLogin={() => setCurrentPage(Page.Login)} supportedLanguages={SupportedLanguages} languageLabels={LanguageLabelMapping} isSigningUp={isSigningUp} />;
-        case Page.Home: return <div className="text-center p-8">
+        case Page.Home: 
+            if (currentUser?.role === UserRole.SUPREM) {
+                 const ingredientsForDashboard = ingredients.map(ing => ({
+                    ...ing,
+                    name: getIngredientName(ing, currentLanguage)
+                }));
+                return <SupremDashboard 
+                    users={users}
+                    ingredients={ingredientsForDashboard}
+                    dishes={dishes}
+                    cookingItems={cookingItems}
+                    customers={customers}
+                    currentUserPreferredLanguage={currentLanguage}
+                />;
+            }
+            return <div className="text-center p-8">
                 <h2 className="text-3xl font-bold text-slate-800 mb-4">Welcome back, {currentUser?.username || 'User'}!</h2>
                 <p className="text-slate-600">Your catering empire awaits.</p>
                 { currentUser?.credits !== undefined && currentUser.role !== UserRole.SUPREM &&
@@ -1483,7 +1517,7 @@ const App: React.FC = () => {
         case Page.UserDetailsView: return selectedUserForView && currentUser?.role === UserRole.SUPREM ? <UserDetailsViewComponent user={selectedUserForView} onBack={() => setCurrentPage(previousPageBeforeUserDetails || Page.UserManagement)} onSetUserCredits={handleSetUserCredits} languageLabels={LanguageLabelMapping} supportedLanguages={SupportedLanguages} onUpdateUserLanguage={handleUpdateUserLanguage} onUpdateUserDetailsBySuprem={handleUpdateUserDetailsBySuprem} /> : <p>User not found or access denied.</p>;
         case Page.Profile: return currentUser ? <Modal onClose={() => setCurrentPage(Page.Home)}><CustomerForm onSave={handleUpdateProfile} onCancel={() => setCurrentPage(Page.Home)} existingCustomer={{...currentUser, name: currentUser.username, image_url: currentUser.image_url, number_of_persons:0, selectedDishes: [], selectedCookingItems: [], generated_order_details: null}} isProfileForm={true} dishes={[]} cookingItems={[]} ingredients={[]} generateId={generateId} currentUserPreferredLanguage={currentLanguage} isSubmitting={isModalSubmitting}/></Modal> : <p>Not logged in.</p>;
         case Page.Ingredients: {
-            const filteredIngredients = ingredients.filter(ing => getTranslatedText(ing.name_localized, currentLanguage).toLowerCase().includes(searchTerm.toLowerCase()));
+            const filteredIngredients = ingredients.filter(ing => getIngredientName(ing, currentLanguage).toLowerCase().includes(searchTerm.toLowerCase()));
             const importIngredientsButtonLabel = getUIText(UITranslationKeys.EXCEL_IMPORT_INGREDIENTS_BUTTON, currentLanguage);
             const exportIngredientsButtonLabel = getUIText(UITranslationKeys.EXCEL_EXPORT_INGREDIENTS_BUTTON, currentLanguage);
             return <CrudSection
@@ -1491,14 +1525,14 @@ const App: React.FC = () => {
                 items={filteredIngredients}
                 renderItem={(item: Ingredient) => (
                     <div key={item.id} className="bg-slate-50 p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-                        <img src={item.image_url || placeholderImage(DEFAULT_IMAGE_SIZE, DEFAULT_IMAGE_SIZE, getTranslatedText(item.name_localized, currentLanguage))} alt={getTranslatedText(item.name_localized, currentLanguage)} className="w-full h-40 object-cover rounded-md mb-3" />
-                        <h3 className="text-lg font-semibold text-slate-700">{getTranslatedText(item.name_localized, currentLanguage)}</h3>
+                        <img src={item.image_url || placeholderImage(DEFAULT_IMAGE_SIZE, DEFAULT_IMAGE_SIZE, getIngredientName(item, currentLanguage))} alt={getIngredientName(item, currentLanguage)} className="w-full h-40 object-cover rounded-md mb-3" />
+                        <h3 className="text-lg font-semibold text-slate-700">{getIngredientName(item, currentLanguage)}</h3>
                         <p className="text-sm text-slate-500">{item.quantity} {item.unit}</p>
                         <p className="text-sm text-slate-600 font-medium">{getUIText(UITranslationKeys.PRICE_LABEL, currentLanguage)}: {item.price.toFixed(2)}</p>
                          {canPerformAction('edit', 'ingredient', item) && (
                             <div className="mt-3 flex space-x-2">
-                                <button onClick={() => openModal('ingredient', item)} className="p-2 bg-yellow-400 hover:bg-yellow-500 text-yellow-800 rounded-md shadow hover:shadow-md transition-all text-xs" aria-label={`Edit ${getTranslatedText(item.name_localized, currentLanguage)}`}><PencilIcon className="w-4 h-4"/></button>
-                                {canPerformAction('delete', 'ingredient', item) && <button onClick={() => handleDeleteIngredient(item.id)} className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-md shadow hover:shadow-md transition-all text-xs" aria-label={`Delete ${getTranslatedText(item.name_localized, currentLanguage)}`} disabled={isModalSubmitting}><TrashIcon className="w-4 h-4"/></button>}
+                                <button onClick={() => openModal('ingredient', item)} className="p-2 bg-yellow-400 hover:bg-yellow-500 text-yellow-800 rounded-md shadow hover:shadow-md transition-all text-xs" aria-label={`Edit ${getIngredientName(item, currentLanguage)}`}><PencilIcon className="w-4 h-4"/></button>
+                                {canPerformAction('delete', 'ingredient', item) && <button onClick={() => handleDeleteIngredient(item.id)} className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-md shadow hover:shadow-md transition-all text-xs" aria-label={`Delete ${getIngredientName(item, currentLanguage)}`} disabled={isModalSubmitting}><TrashIcon className="w-4 h-4"/></button>}
                             </div>
                         )}
                     </div>
@@ -1720,46 +1754,51 @@ const App: React.FC = () => {
                   {nav.label}
                 </button>
               ))}
-              <div className="relative group">
-                <button className="p-1.5 rounded-md text-slate-600 hover:bg-blue-100 hover:text-blue-700 transition-colors">
+              <div className="relative" ref={settingsMenuRef}>
+                 <button 
+                    onClick={() => setIsSettingsMenuOpen(!isSettingsMenuOpen)}
+                    className="p-1.5 rounded-md text-slate-600 hover:bg-blue-100 hover:text-blue-700 transition-colors"
+                >
                   <CogIcon className="w-5 h-5" />
                 </button>
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-xl overflow-hidden z-20 hidden group-hover:block ring-1 ring-slate-200">
-                    <button
-                        onClick={() => setCurrentPage(Page.Profile)}
-                        className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-100 transition-colors flex items-center"
-                    >
-                        <UserCircleIcon className="w-5 h-5 mr-2 text-slate-500"/> Edit Profile
-                    </button>
-                    <div className="px-4 py-2.5 border-t border-slate-200">
-                        <label htmlFor="language-select-header" className="block text-xs text-slate-500 mb-1">Language</label>
-                        <select 
-                            id="language-select-header"
-                            value={currentLanguage}
-                            onChange={(e) => handleLanguageChange(e.target.value as Language)}
-                            className="w-full p-2 text-sm border-slate-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                            disabled={isModalSubmitting}
-                        >
-                            {SupportedLanguages.map(lang => (
-                                <option key={lang} value={lang}>{LanguageLabelMapping[lang]}</option>
-                            ))}
-                        </select>
-                    </div>
-                     {currentUser.role === UserRole.SUPREM && (
+                {isSettingsMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-xl overflow-hidden z-20 ring-1 ring-slate-200">
                         <button
-                            onClick={() => setCurrentPage(Page.UserManagement)}
-                            className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-100 transition-colors flex items-center border-t border-slate-200"
+                            onClick={() => { setCurrentPage(Page.Profile); setIsSettingsMenuOpen(false); }}
+                            className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-100 transition-colors flex items-center"
                         >
-                            <ShieldCheckIcon className="w-5 h-5 mr-2 text-slate-500"/> User Management
+                            <UserCircleIcon className="w-5 h-5 mr-2 text-slate-500"/> Edit Profile
                         </button>
-                    )}
-                    <button
-                        onClick={handleLogout}
-                        className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center border-t border-slate-200"
-                    >
-                        <ArrowLeftOnRectangleIcon className="w-5 h-5 mr-2"/> Logout
-                    </button>
-                </div>
+                        <div className="px-4 py-2.5 border-t border-slate-200">
+                            <label htmlFor="language-select-header" className="block text-xs text-slate-500 mb-1">Language</label>
+                            <select 
+                                id="language-select-header"
+                                value={currentLanguage}
+                                onChange={(e) => handleLanguageChange(e.target.value as Language)}
+                                className="w-full p-2 text-sm border-slate-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                                disabled={isModalSubmitting}
+                            >
+                                {SupportedLanguages.map(lang => (
+                                    <option key={lang} value={lang}>{LanguageLabelMapping[lang]}</option>
+                                ))}
+                            </select>
+                        </div>
+                        {currentUser.role === UserRole.SUPREM && (
+                            <button
+                                onClick={() => { setCurrentPage(Page.UserManagement); setIsSettingsMenuOpen(false); }}
+                                className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-100 transition-colors flex items-center border-t border-slate-200"
+                            >
+                                <ShieldCheckIcon className="w-5 h-5 mr-2 text-slate-500"/> User Management
+                            </button>
+                        )}
+                        <button
+                            onClick={handleLogout}
+                            className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center border-t border-slate-200"
+                        >
+                            <ArrowLeftOnRectangleIcon className="w-5 h-5 mr-2"/> Logout
+                        </button>
+                    </div>
+                )}
               </div>
             </nav>
           </div>
@@ -1787,7 +1826,7 @@ const App: React.FC = () => {
 
       {modalOpen && modalType && (
         <Modal onClose={closeModal}>
-          {modalType === 'ingredient' && <IngredientForm onSave={handleSaveIngredient} onCancel={closeModal} existingIngredient={editingItem as Ingredient | null} units={IngredientUnits} generateId={generateId} currentUserPreferredLanguage={currentLanguage} isSubmitting={isModalSubmitting}/>}
+          {modalType === 'ingredient' && <IngredientForm onSave={handleSaveIngredient} onCancel={closeModal} existingIngredient={editingItem as Ingredient | null} units={IngredientUnits} currentUserPreferredLanguage={currentLanguage} isSubmitting={isModalSubmitting}/>}
           {modalType === 'dish' && <DishForm onSave={handleSaveDish} onCancel={closeModal} existingDish={editingItem as Dish | null} ingredients={ingredients} generateId={generateId} currentUserPreferredLanguage={currentLanguage} isSubmitting={isModalSubmitting}/>}
           {modalType === 'cookingItem' && <CookingItemForm onSave={handleSaveCookingItem} onCancel={closeModal} existingCookingItem={editingItem as CookingItem | null} units={CookingItemUnits} generateId={generateId} currentUserPreferredLanguage={currentLanguage} isSubmitting={isModalSubmitting}/>}
           {modalType === 'customer' && <CustomerForm onSave={handleSaveCustomer} onCancel={closeModal} existingCustomer={editingItem as Customer | null} dishes={dishes} cookingItems={cookingItems} ingredients={ingredients} currentUserId={currentUser?.id} userRole={currentUser?.role} generateId={generateId} currentUserPreferredLanguage={currentLanguage} isSubmitting={isModalSubmitting}/>}
@@ -1805,5 +1844,3 @@ const App: React.FC = () => {
     </div>
   );
 };
-
-export default App;

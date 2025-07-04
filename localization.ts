@@ -24,5 +24,27 @@ export const getIngredientName = (
     fallbackLang: Language = Language.EN
 ): string => {
     if (!ingredient) return 'N/A';
-    return getTranslatedText(ingredient.name_localized, preferredLang, fallbackLang);
+    const preferredKey = `name_${preferredLang}` as keyof Ingredient;
+    const fallbackKey = `name_${fallbackLang}` as keyof Ingredient;
+
+    if (ingredient[preferredKey]) {
+        const name = ingredient[preferredKey];
+        if (typeof name === 'string' && name.trim()) return name;
+    }
+    
+    if (ingredient[fallbackKey]) {
+        const name = ingredient[fallbackKey];
+        if (typeof name === 'string' && name.trim()) return name;
+    }
+    
+    // Ultimate fallback to the first available name field
+    for (const lang of SupportedLanguages) {
+        const key = `name_${lang}` as keyof Ingredient;
+        if (ingredient[key]) {
+            const name = ingredient[key];
+            if (typeof name === 'string' && name.trim()) return name;
+        }
+    }
+    
+    return 'N/A';
 };
